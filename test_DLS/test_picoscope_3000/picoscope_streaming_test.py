@@ -72,8 +72,8 @@ status["setChB"] = ps.ps3000aSetChannel(chandle,
 assert_pico_ok(status["setChB"])
 
 # Size of capture
-sizeOfOneBuffer = 50000
-numBuffersToCapture = 10
+sizeOfOneBuffer = 5000
+numBuffersToCapture = 100
 
 totalSamples = sizeOfOneBuffer * numBuffersToCapture
 
