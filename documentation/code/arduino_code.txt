@@ -1,0 +1,22 @@
+So the idea for the arduino code is to have commands comming from the python code which will be interpreted by the arduino with switches. 
+
+The code is decomposed as following : 
+
+Declaration of variables. 
+Setup : 
+Here there is the classic stuff each pin is declared as input or output, initialisation of the serial connection, then initialisation of the attenuation motor position 
+and move the motor to the fully attenuated position. 
+Main loop :
+Wait for commands to arrive two types of commands :
+Move  : MAP55 M -> move, A -> Attenuator, P positive direction in regards of trigonometric direction, 55 -> number of steps. returns the new position and send it to serial connection  
+Read  : RT R -> read, T -> turntable return the absolute encoder value
+
+for move of turntable every X rotation of the motor (to be determined in function of the reduction ratio) the position is read from the encoder and send to the python code. 
+the angle are always send in decimal for the absolute encoder (so the calibration for the 0° point can be changed in the python without having to reset the arduino code) 
+and they are send in degrees for the attenuator motor because the 0° point is actually determind at each initialisation. 
+
+Things to do arduino code :
+
+Test if the rotation direction of the turntable motor is correct
+Determine the reduction ratio 
+Insert the initialisation of the attenuator function in the setup function

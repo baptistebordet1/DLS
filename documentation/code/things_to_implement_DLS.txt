@@ -1,0 +1,15 @@
+Calibration procedure for the turntable angle : 
+
+On GUI Click on a button or something else :
+1) open a window with the following message : 
+"you will start the Calibration procedure for the turntable angle
+Then follow the calibration procedure on the documentation
+Button Start Cancel 
+Start goes to :
+Adjust the turntable to be in a 0° degree angle 
+Button read
+On click will send a command to Arduino interface a command to read the encoder value 
+The value is saved to be printed after  
+and then print it 
+Print the following message now the values can be copy pasted in the constant file inside the arduino_interface class and assigned to the TURNTABLE_ANGLE_MIN_DEC 
+Message End of procedure. please restart the code after values' change and verify calibration a konwn sample. 

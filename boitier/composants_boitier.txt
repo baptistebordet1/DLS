@@ -1,0 +1,18 @@
+Carte électronique :
+
+- Régulateurs de tension (1*15V, 2*12V, 2*5V) -> 
+     5 V : https://fr.rs-online.com/web/p/regulateurs-de-tension/1029429?gb=s
+     12V 350mA (moteur attenuatiopn) : https://fr.rs-online.com/web/p/regulateurs-de-tension/9181975?gb=s
+     15V : https://fr.rs-online.com/web/p/regulateurs-de-tension/2988558?gb=s
+- Capacités de filtrage (4*0.22µF, 4*0.01µF) -> déjà au labo 
+- 1 resistance (pour photo transistor : ohm) -> déjà au labo 
+- 6 borniers 
+- 1 radiateur -> https://fr.rs-online.com/web/p/dissipateurs-de-chaleur/1898533?gb=s
+
+1 Ventilateur 5V -> 
+1 connecteur alimentation secteur avec fusible et filtre intégré -> https://fr.rs-online.com/web/p/filtres-iec/4932967?gb=s
+2 connecteur circulaire 7 pins en montage panneau (1 male, 1 femelle)
+     male : 
+     femelle :  
+1 connecteur circulaire 4 pins en montage panneau (1 femelle) -> 
+     male : 

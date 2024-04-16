@@ -1,0 +1,35 @@
+This code is class which will be called in the master thread for background (i.e. the thread dealing with the acquisition and positionning of teh motors) 
+after each exception serial.serialException another raise is here to prevent the function to continue. An information is send to the GUI to raise a window indicating a communication error 
+and to quit the main programm safely (i.e. terminate multiprocessing and multithreading) 
+
+The only class initiate the serial connection and then can send and receive message to and from the arduino :
+ 
+__init__ initiate the connection with arduino and returns error if not connected 
+
+Converter_angle_rotation_turntable_deg_to_dec : will convert the angle from the GUI which is in degree to a value in encoder format (the value will be converted in number of steps for a motor move inside the arduino code because 
+it requires to measure the position and it's easier to do it directly on teh arduino than reading the value on the serrial connection) 
+
+Converter_angle_rotation_turntable_dec_to_deg : will convert the value from the encoder format to an angle in degree whihc will be send to the GUI to be printed 
+
+hex_to_float : convert the value send from arduino in hexa decimal format to float with reversing the str 
+
+var_to byte : convert str, int or float variables to a byte signature to be send via pyserial. 
+ 
+send_rotation_turntable : will first convert the angle to reach (!!!not how many degrees the motor will move!!!) send the command and wait for an update of the motor position from the arduino 
+until the movement is finished where the value is read one last time 
+
+send_read_position_turntable : clear the input buffer if necessessary request the reading, read input buffer and raise another serial exception if timeout is expired 
+
+Close : Close the connection with the arduino 
+
+
+
+BIGGGG WARNINNNG : 
+In order to get a timeout the librayr serial is modified and the modification is made on the fie serialutil in the function read_until()
+ if timeout is expired it will raise a SerialException instead of a break (don't forget to modify it, when changing of computeur) 
+
+
+To do things to implement in python code : 
+
+Replace print("connection error") by the the signal to send to the GUI
+Manage the end of the send rotation turntable to use the function to read position
