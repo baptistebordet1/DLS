@@ -20,3 +20,12 @@ Excelitas_Silicon_PIN_Photodiodes.pdf -> Photodiode tech spec
 Single Photon Counting Module (SPCM) model is SPMC-AQRH-44-FC. 
 
 Excelitas_SPCM-AQRH_Family_datasheet 10-2020.pdf -> SPCM tech spec
+
+leadshine EM542S digital microstep driver -> motor driver for the rotation 
+driver_motor_leadshine_rotation.pdf -> user guide
+
+polulu 36v4 driver motor -> motor driver for the attenuator 
+pololu-high-power-stepper-motor-drivr-36v4-dimensions -> mechanical dimensions 
+pololu-high-power-stepper-motor-driver-36v4-schematic -> electrical schematics 
+see https://www.pololu.com/product/3730 for information on the product and here : 
+https://github.com/pololu/high-power-stepper-driver-arduino for the control of the chip with Arduino

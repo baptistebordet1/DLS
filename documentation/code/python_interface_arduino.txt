@@ -28,6 +28,10 @@ BIGGGG WARNINNNG :
 In order to get a timeout the librayr serial is modified and the modification is made on the fie serialutil in the function read_until()
  if timeout is expired it will raise a SerialException instead of a break (don't forget to modify it, when changing of computeur) 
 
+Another big Warning in pyqtgraph the function setMouseMode is not present in the PlotWidgets functions the file PlotItem has to be modified 
+in the method from viewBox to add the setMouseMode in the list 
+and same thing in the PlotWidget list of functions created to propagate the change. 
+
 
 To do things to implement in python code : 
 

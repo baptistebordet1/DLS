@@ -12,3 +12,4 @@ class Arduino_interface():
     TURNTABLE_ANGLE_MIN_DEC=367.2 # To calibrate angle corresponding to the O° angle 
     TURNTABLE_ANGLE_MAX_DEG=180 # 180° angle 
     TURNTABLE_ANGLE_MAX_DEC=TURNTABLE_ANGLE_MIN_DEC+REDUCTION_RATIO*180 # calculated angle from the 0 position thanks to reduction ration 
+    

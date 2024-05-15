@@ -41,7 +41,14 @@ class Arduino_communication():
             raise
             
         time.sleep(Arduino_interface.INITIALISATION_TIME) # here to let enough time to Initialise connection with arduino 
-    
+         
+        # Ping aruino to see if connected 
+        
+        string_to_send=b"P"
+        self.arduino.write(string_to_send)
+        is_connected=self.arduino.read(5)
+        if is_connected !="ALIVE":
+            raise serial.SerialTimeoutException
     
     """
     UNIT CONVERSIONS 
@@ -127,6 +134,7 @@ class Arduino_communication():
     """
     SENDING COMMANDS
     """
+    
         
     def send_rotation_turntable(self, angle_rotation, direction_rotation): 
         """
@@ -204,7 +212,10 @@ class Arduino_communication():
          print ('Connection to Arduino closed')
           
 
-
-Arduino_comm=Arduino_communication()
+try :
+    Arduino_comm=Arduino_communication()
+except serial.SerialTimeoutException:
+    raise
+    sys.exit()
 Arduino_comm.send_rotation_turntable(80, "P")
 Arduino_comm.close()

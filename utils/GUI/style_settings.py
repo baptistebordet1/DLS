@@ -6,7 +6,7 @@ Created on Friday February 2 2024
 """
 
 import qdarkstyle
-import re
+
 
 def load_style(style):
     """
@@ -21,10 +21,13 @@ def load_style(style):
     accent_color="#406482" if style=="dark" else "#94c1e0"
     accent_hover_color="#254f73" if style=="dark" else "#5a96bf"
     checked_style="\n\nQPushButton:checked {{background-color: {};}}\n\nQPushButton:checked:hover {{background-color: {};}}".format(accent_color,accent_hover_color)
+    font_size="\n\n*{font-size:15px;}"
     stylesheet=qdarkstyle.load_stylesheet(qt_api="pyqt5",palette=palette)
-    m=re.search(r"QPushButton:checked\s*{[^}]*}",stylesheet,flags=re.DOTALL)
-    end=m.span()[1]
-    stylesheet=stylesheet[:end]+checked_style+stylesheet[end:]
+    end=len(stylesheet)
+    stylesheet=stylesheet[:end]+checked_style
+    end=len(stylesheet)
+    stylesheet=stylesheet[:end]+font_size
+
     return stylesheet
 
 def set_style(app,style="dark"):
@@ -45,7 +48,7 @@ def set_style(app,style="dark"):
     """
    stylesheet=load_style(style)
    app.setStyleSheet(stylesheet)
-   return app 
+   return app
     
 
 """
@@ -58,22 +61,22 @@ Below is an example for file dialogs windows by default are oppenned with OS sty
 
 """
 
-import sys
-import qdarkstyle
-from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QFileDialog
+# import sys
+# import qdarkstyle
+# from PyQt5 import QtWidgets
+# from PyQt5.QtWidgets import QFileDialog
 
-# create the application and the main window
-app = QtWidgets.QApplication(sys.argv)
-window = QtWidgets.QMainWindow()
+# # create the application and the main window
+# app = QtWidgets.QApplication(sys.argv)
+# window = QtWidgets.QMainWindow()
 
-# setup stylesheet
-app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
-# or in new API
-app.setStyleSheet(qdarkstyle.load_stylesheet(qt_api='pyqt5'))
+# # setup stylesheet
+# app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+# # or in new API
+# app.setStyleSheet(qdarkstyle.load_stylesheet(qt_api='pyqt5'))
 
-dialog=QFileDialog(window)
-dialog.show()
-# run
-window.show()
-app.exec_()
+# dialog=QFileDialog(window)
+# dialog.show()
+# # run
+# window.show()
+# app.exec_()

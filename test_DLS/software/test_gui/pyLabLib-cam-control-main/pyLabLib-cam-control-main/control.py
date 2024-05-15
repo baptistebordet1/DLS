@@ -106,7 +106,7 @@ class StandaloneFrame(container.QWidgetContainer):
         self.load_locals()
         self.gui_level="full"
         self.compact_interface=settings.get("interface/compact",False)
-
+        print(type(self))
         ### Setup GUI
         cam_display_name=settings["cameras",self.cam_name].get("display_name",self.cam_name)
         self.setWindowTitle("{} control".format(cam_display_name))
