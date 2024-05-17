@@ -22,11 +22,15 @@ def load_style(style):
     accent_hover_color="#254f73" if style=="dark" else "#5a96bf"
     checked_style="\n\nQPushButton:checked {{background-color: {};}}\n\nQPushButton:checked:hover {{background-color: {};}}".format(accent_color,accent_hover_color)
     font_size="\n\n*{font-size:15px;}"
+    push_button_padding="\n \nQPushButton {padding: 7px;} "
     stylesheet=qdarkstyle.load_stylesheet(qt_api="pyqt5",palette=palette)
     end=len(stylesheet)
     stylesheet=stylesheet[:end]+checked_style
     end=len(stylesheet)
+    stylesheet=stylesheet[:end]+push_button_padding
+    end=len(stylesheet)
     stylesheet=stylesheet[:end]+font_size
+
 
     return stylesheet
 
@@ -48,7 +52,7 @@ def set_style(app,style="dark"):
     """
    stylesheet=load_style(style)
    app.setStyleSheet(stylesheet)
-   return app
+   return app,stylesheet
     
 
 """

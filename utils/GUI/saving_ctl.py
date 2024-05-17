@@ -29,8 +29,7 @@ class Saving(container.QGroupBoxContainer):
             
         self.params.add_combo_box("format", label="Format:", options=[".csv",".txt",".xls",".xlsx"],index_values=[".csv",".txt",".xls",".xlsx"])
         self.params.add_combo_box("separator",label="Separator:", options=[",",";"],index_values=[",",";"])
-        self.params.add_num_edit("corr_length",label="𝜏 max(ms):")
-        self.params.add_num_edit("acq_time",label="Acquisition Time(s):")
+        
         
     def browse_button_folder(self):
         dialog=QFileDialog(self,"Saving Folder Path ")
@@ -57,4 +56,3 @@ class Saving(container.QGroupBoxContainer):
                 raise Exception("The format of the supplied file for saving is not supported")
             self.params.wv["file_path"]=self.filename
             
-        

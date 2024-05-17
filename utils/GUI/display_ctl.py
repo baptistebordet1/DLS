@@ -24,7 +24,6 @@ class plot_auto_correlation(container.QFrameContainer):
         self.auto_corr.setMouseMode(pyqtgraph.ViewBox.RectMode)
         self.plot1=self.auto_corr.plot(array["x"],array["y"],name="auto_corr1",symbol="x", pen=None)
         
-        
     def update_plot(self):
         self.plot1.yData
         
@@ -37,7 +36,10 @@ class plot_cross_correlation(container.QFrameContainer):
         self.cross_corr.setMouseMode(pyqtgraph.ViewBox.RectMode)
         self.cross_corr.getPlotItem().addLegend()
         self.cross_corr.getPlotItem().setLogMode(True)
-        self.cross_corr.setLabel("left","Cross Correlation")     
+        self.cross_corr.setLabel("left","Cross Correlation")  
+        
+    def update_plot(self):
+        pass
         
 class plot_PD(container.QFrameContainer):
     def setup(self):
@@ -47,3 +49,6 @@ class plot_PD(container.QFrameContainer):
         self.PD.getPlotItem().addLegend()
         self.PD.showGrid(True,True,0.7)
         self.PD.setLabel("left","I avg")
+    
+    def update_plot(self):
+        pass
