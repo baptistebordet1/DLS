@@ -1,0 +1,7 @@
+sequence_file_path: # 
+saving_folder_path: #
+saving_filename: # Without extension !!! 
+corr_length_int: 999 #  
+acq_time_int: 20 #
+saving_file_format:.txt # Must be ".csv", ".txt", ".xls", ".xlsx"
+saving_file_separator: ; # Must be ";" or "," 

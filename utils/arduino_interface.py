@@ -93,7 +93,7 @@ class Arduino_communication():
     def hex_to_float(self,hexa_val):
         """
         Convert hexadecimal values send by the serial connection of the arduino 
-        to afloat type. Used for the reading of position of the absolute encoder
+        to a float type. Used for the reading of position of the absolute encoder
 
         Parameters
         ----------
@@ -168,7 +168,7 @@ class Arduino_communication():
                 except serial.SerialException:
                     print("connection error")
                     raise
-                if message_arduino_movement in "movement_finished":
+                if "movement_finished" in message_arduino_movement :
                     movement_finished=True
                     try: 
                        self.position_motor_rotation_dec=self.arduino.read_until()

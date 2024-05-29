@@ -14,8 +14,10 @@ from utils.GUI import plots_ctl
 from utils.GUI import acquisition_ctl
 from utils.GUI import sequence_ctl
 
+from utils import constants
+
 from PyQt5 import QtWidgets
-from PyQt5.QtCore import Qt, QObject, Signal 
+from PyQt5.QtCore import Qt, QObject, pyqtSignal, QThread, QTimer
 
 from pylablib.core.gui.widgets import container
 
@@ -23,15 +25,16 @@ import sys
 import traceback
 import logging
 
-class interface_thread():
-    def __init__():
-        pass
-
+class interface_thread(QObject):
+    pass
+      
 class Window(container.QWidgetContainer):
     def setup(self):
         super().__init__()
         super().setup(layout="hbox",name="window")
+        #self.interface_thread=interface_thread()
         self.setWindowState(Qt.WindowMaximized)
+        self.setWindowFlags(Qt.WindowStaysOnTopHint)
         self.screensize=QtWidgets.QDesktopWidget().screenGeometry(self)
         self.screen_w=self.screensize.width()
         self.screen_h=self.screensize.height()
@@ -40,6 +43,9 @@ class Window(container.QWidgetContainer):
                           "acquisition_progress":"No acquisition","error":"None"}
         self.dict_motors_positions={"Rotation motor pos":0,"Attenuation motor pos":0}
         self.dict_acquisition={"corr_length":1000, "acq_time":30}
+        self._config=constants.default_configuration(self)
+        self.config_dict=self._config.config_dict
+        
 
         # Plots tab
         
@@ -83,7 +89,7 @@ class Window(container.QWidgetContainer):
         
         # Motor control, Acquisition and Saving controls 
         
-        with self.using_new_sublayout("motor_acquistion_saving_box", "vbox"):
+        with self.using_new_sublayout("motor_acquistion_saving_box", "grid"):
             
             # Motor control tabs
             self.motor_tabs=self.add_child("motor_control", container.QTabContainer(self))
@@ -97,29 +103,38 @@ class Window(container.QWidgetContainer):
             self.motor_attenuation_control.setup()
             self.add_padding(kind="vertical")
             
-            # Sequence tab
-            self.sequence_tab=self.add_to_layout(container.QFrameContainer(self))
-            self.sequence_tab.setup()
-            self.sequence_tab.setMaximumWidth(int(0.15*self.screen_w))
-            self.sequence_tab.setMaximumHeight(int(0.15*self.screen_h))
-            self.sequence_control=self.sequence_tab.add_to_layout(sequence_ctl.Sequence(self))
-            self.sequence_control.setup()
-            
-            # Acquistion tab
-            self.acquisition_tab=self.add_to_layout(container.QFrameContainer(self))
-            self.acquisition_tab.setup()
-            self.acquisition_tab.setMaximumWidth(int(0.15*self.screen_w))
-            self.acquisition_tab.setMaximumHeight(int(0.15*self.screen_h))
-            self.acquisition_control=self.acquisition_tab.add_to_layout(acquisition_ctl.Acquisition(self))
-            self.acquisition_control.setup()
-                       
             # Saving tab
-            self.saving_tab=self.add_to_layout(container.QFrameContainer(self))
+            self.saving_tab=self.add_to_layout(container.QFrameContainer(self),location=(4))
             self.saving_tab.setup()
             self.saving_tab.setMaximumWidth(int(0.15*self.screen_w))
             self.saving_tab.setMaximumHeight(int(0.15*self.screen_h))
             self.saving_control=self.saving_tab.add_to_layout(saving_ctl.Saving(self))
-            self.saving_control.setup()      
+            self.saving_control.setup()
+            
+            # Acquistion tab
+            self.acquisition_tab=self.add_to_layout(container.QFrameContainer(self),location=(2))
+            self.acquisition_tab.setup()
+            self.acquisition_tab.setMaximumWidth(int(0.15*self.screen_w))
+            self.acquisition_tab.setMaximumHeight(int(0.15*self.screen_h))
+            self.acquisition_control=self.acquisition_tab.add_to_layout(acquisition_ctl.Acquisition(self))
+            self.acquisition_control.setup(self.saving_control)
+                       
+            # Sequence tab
+            self.sequence_tab=self.add_to_layout(container.QFrameContainer(self),location=(3))
+            self.sequence_tab.setup()
+            self.sequence_tab.setMaximumWidth(int(0.15*self.screen_w))
+            self.sequence_tab.setMaximumHeight(int(0.15*self.screen_h))
+            self.sequence_control=self.sequence_tab.add_to_layout(sequence_ctl.Sequence(self))
+            self.sequence_control.setup(self.saving_control)            
+            
+            self.initialize_default_values()
+            
+    # load config_dict into the differnt part of the control 
+    
+    def initialize_default_values(self):           
+        self.acquisition_control.default_values(self.config_dict)
+        self.sequence_control.default_values(self.config_dict)
+        self.saving_control.default_values(self.config_dict)
 
     def update_GUI(self,new_dict_status, new_dict_motors):
         #TODO call this function in the Thread to update 
@@ -128,9 +143,9 @@ class Window(container.QWidgetContainer):
         self.dict_status=new_dict_status
         self.dict_motors_positions=new_dict_motors
         
-        status_ctl.Status.update_indicators(self.dict_status)
-        motor_ctl.Motor_rotation.update_position(self.dict_motors_positions)
-        motor_ctl.Motor_attenuation.update_position(self.dict_motors_positions)
+        self.status_control.update_indicators(self.dict_status)
+        self.motor_rotation_control.update_position(self.dict_motors_positions)
+        self.motor_attenuation_control.update_position(self.dict_motors_positions)
         
 
 
@@ -142,19 +157,32 @@ log.addHandler(handler)
 formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s\n  --------------------- ")
 handler.setFormatter(formatter)
     
-
+    
+# Pop up window when an exeption is raised 
+def show_exception_box(log_msg):
+    """Checks if a QApplication instance is available and shows a messagebox with the exception message. 
+    If unavailable (non-console application), log an additional notice.
+    """
+    if QtWidgets.QApplication.instance() is not None:
+            errorbox = QtWidgets.QMessageBox()
+            errorbox.setWindowFlags(Qt.WindowStaysOnTopHint)
+            errorbox.setWindowTitle("Error Message")
+            errorbox.setText("log of the error (last line will probably indicate what it is about):\n{0}".format(log_msg))
+            errorbox.exec_()
+            
+    else:
+        log.debug("No QApplication instance available.")
 # get Exceptions and treat it 
 class UncaughtHook(QObject):
-    _exception_caught = Signal(object)
+    _exception_caught = pyqtSignal(str)
 
     def __init__(self, *args, **kwargs):
         super(UncaughtHook, self).__init__(*args, **kwargs)
-
         # this registers the exception_hook() function as hook with the Python interpreter
         sys.excepthook = self.exception_hook
 
         # connect signal to execute the message box function always on main thread
-        self._exception_caught.connect(self.show_exception_box)
+        self._exception_caught.connect(show_exception_box)
 
     def exception_hook(self, exc_type, exc_value, exc_traceback):
         """Function handling uncaught exceptions.
@@ -166,23 +194,13 @@ class UncaughtHook(QObject):
         else:
             log_msg = '\n'.join([''.join(traceback.format_tb(exc_traceback)),
                                  '{0}: {1}'.format(exc_type.__name__, exc_value)])
-            log.critical("Uncaught exception:\n {0}".format(log_msg))
-
             # trigger message box show
+            log.critical("Uncaught exception:\n {0}".format(log_msg))
             self._exception_caught.emit(log_msg)
-    
-    # Pop up window when an exeption is raised 
-    def show_exception_box(log_msg):
-        """Checks if a QApplication instance is available and shows a messagebox with the exception message. 
-        If unavailable (non-console application), log an additional notice.
-        """
-        if QtWidgets.QApplication.instance() is not None:
-                errorbox = QtWidgets.QMessageBox()
-                errorbox.setWindowTitle("Error Message")
-                errorbox.setText("log of the error (last line will probably indicate what it is about):\n{0}".format(log_msg))
-                errorbox.exec_()
-        else:
-            log.debug("No QApplication instance available.")
+            
+
+           
+
 
 # Main 
 

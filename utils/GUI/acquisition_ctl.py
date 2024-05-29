@@ -12,13 +12,19 @@ import pathlib
 import os
 from PyQt5 import QtWidgets
 
+from utils.constants import Acquisition_time_limit
+from utils.GUI import saving_ctl
+
+#TODO add start and stop methods 
+
 class Acquisition(container.QGroupBoxContainer):
-    def setup(self):
+    def setup(self,saving_control):
+        self.saving_control=saving_control
         super().setup(caption="Acquisition")
         self.params=self.add_to_layout(param_table.ParamTable(self))
         self.params.setup(name="acquisition_table")
-        self.params.add_num_edit("corr_length",label="𝜏 max(ms):")
-        self.params.add_num_edit("acq_time",label="Acquisition Time(s):")
+        self.params.add_num_edit("corr_length",label="𝜏 max(ms):",limiter=(Acquisition_time_limit.TAU_MIN, Acquisition_time_limit.TAU_MAX))
+        self.params.add_num_edit("acq_time",label="Acquisition Time(s):", limiter=(Acquisition_time_limit.ACQ_TIME_MIN,Acquisition_time_limit.ACQ_TIME_MAX ))
         with self.params.using_new_sublayout("buttons","hbox"):
             self.params.add_button("start_acquisition", caption="Start Acquisition")
             self.params.add_button("stop_acquisition", caption="Stop Acquisition")
@@ -31,3 +37,22 @@ class Acquisition(container.QGroupBoxContainer):
             self.params.w["stop_acquisition"].setIcon(QtGui.QIcon(self.stop_pic))
             self.params.w["start_acquisition"].setMinimumHeight(int(0.027*QtWidgets.QDesktopWidget().screenGeometry(self).height()))
             self.params.w["stop_acquisition"].setMinimumHeight(int(0.027*QtWidgets.QDesktopWidget().screenGeometry(self).height()))
+            self.params.w["start_acquisition"].clicked.connect(self.start_acquisition)
+            
+    def default_values(self, config_dict):
+        if float(config_dict["corr_length"])<=Acquisition_time_limit.TAU_MAX: 
+            self.params.v["corr_length"]=float(config_dict["corr_length"])
+        else: 
+            QtWidgets.QMessageBox.warning(self,
+            "𝜏 max too big", f"𝜏 max can't be higher than {Acquisition_time_limit.TAU_MAX} ms \n default 𝜏 max will be ignored")
+        self.params.v["acq_time"]=float(config_dict["acq_time"])
+        
+    def start_acquisition(self):
+        folder_path,filename,extension_file,separator=saving_ctl.Saving.grab_saving_file_path(self.saving_control)
+        is_folder=pathlib.Path(folder_path).is_dir()
+        if is_folder==False:
+            QtWidgets.QMessageBox.warning(self,
+                                          "Saving Folder doesn't exist", "The saving folder you indicated is unreachable, try browsing instead") 
+            return
+       
+    #TODO here add just the signal to start acquisition with folder path and filename, format and separator, tau_max and t_acquisition

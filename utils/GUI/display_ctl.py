@@ -5,12 +5,10 @@ Created on Thursday May 2 2024
 @author: Baptiste Bordet
 """
 
-import PyQt5
 import pyqtgraph
 import numpy as np 
 
 from pylablib.core.gui.widgets import container
-from pylablib.gui.widgets.plotters import line_plotter
 
 class plot_auto_correlation(container.QFrameContainer):
     def setup(self):
