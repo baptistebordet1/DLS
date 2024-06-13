@@ -10,7 +10,8 @@ from pylablib.core.gui.widgets import container, param_table
 from PyQt5 import QtGui
 import pathlib
 import os
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets 
+from PyQt5.QtCore import pyqtSignal
 
 from utils.constants import Acquisition_time_limit
 from utils.GUI import saving_ctl
@@ -18,6 +19,8 @@ from utils.GUI import saving_ctl
 #TODO add start and stop methods 
 
 class Acquisition(container.QGroupBoxContainer):
+    Acquisition_start=pyqtSignal(str, str, str, str, int, int)
+    Acquisition_stop=pyqtSignal()
     def setup(self,saving_control):
         self.saving_control=saving_control
         super().setup(caption="Acquisition")
@@ -54,5 +57,4 @@ class Acquisition(container.QGroupBoxContainer):
             QtWidgets.QMessageBox.warning(self,
                                           "Saving Folder doesn't exist", "The saving folder you indicated is unreachable, try browsing instead") 
             return
-       
-    #TODO here add just the signal to start acquisition with folder path and filename, format and separator, tau_max and t_acquisition
+        self.Acquisition_start.emit(folder_path, filename,extension_file,separator,self.params.v["corr_length"],self.params.v["acq_time"])

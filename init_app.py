@@ -16,23 +16,23 @@ from utils.GUI import sequence_ctl
 
 from utils import constants
 
+from utils.acquisition import interface_thread
+
 from PyQt5 import QtWidgets
-from PyQt5.QtCore import Qt, QObject, pyqtSignal, QThread, QTimer
+from PyQt5.QtCore import Qt, QObject, pyqtSignal, pyqtSlot, QThread
 
 from pylablib.core.gui.widgets import container
 
 import sys
 import traceback
 import logging
+import numpy as np 
+import serial 
 
-class interface_thread(QObject):
-    pass
-      
 class Window(container.QWidgetContainer):
     def setup(self):
         super().__init__()
         super().setup(layout="hbox",name="window")
-        #self.interface_thread=interface_thread()
         self.setWindowState(Qt.WindowMaximized)
         self.setWindowFlags(Qt.WindowStaysOnTopHint)
         self.screensize=QtWidgets.QDesktopWidget().screenGeometry(self)
@@ -129,25 +129,112 @@ class Window(container.QWidgetContainer):
             
             self.initialize_default_values()
             
-    # load config_dict into the differnt part of the control 
+            self.start_interface_thread()
+           
+            
+            
+            
+    # load config_dict into the different part of the control 
     
     def initialize_default_values(self):           
         self.acquisition_control.default_values(self.config_dict)
         self.sequence_control.default_values(self.config_dict)
         self.saving_control.default_values(self.config_dict)
-
+    
+    # update status and graph on the GUI 
+    
     def update_GUI(self,new_dict_status, new_dict_motors):
-        #TODO call this function in the Thread to update 
         # Maybe add here the updtae on plots too (if teh new arrays to plot are not too big)
         
         self.dict_status=new_dict_status
         self.dict_motors_positions=new_dict_motors
         
-        self.status_control.update_indicators(self.dict_status)
+        self.status_control.update_table(self.dict_status)
         self.motor_rotation_control.update_position(self.dict_motors_positions)
         self.motor_attenuation_control.update_position(self.dict_motors_positions)
         
-
+    def start_interface_thread(self):
+        # This is way to create a new thread which will have an event loop (other ways provided on documentation 
+        # don't create a new thread for most of it or don't have an event loop because the run method is overwritten)
+        
+        # Step 1 Create a worker class whihc inherits from QObject (done in interface_thread.py)
+        # Step 2 : Create a QThread object
+        self.thread = QThread()
+        # Step 3: Create a worker object
+        self.worker =interface_thread.Worker()
+        # Step 4: Move worker to the thread
+        self.worker.moveToThread(self.thread)
+        # Step 5: Connect signals and slots
+        self.thread.started.connect(self.worker.setup)
+        self.worker.thread_finished.connect(self.thread.quit)
+        self.worker.thread_finished.connect(self.worker.deleteLater)
+        self.thread.finished.connect(self.thread.deleteLater)
+        self.worker.update_gui_data.connect(self.update_GUI)
+        self.worker.fail_init_attenuator.connect(self.catch_motor_error)
+        self.worker.error_attenuation_motor.connect(self.catch_motor_error)
+        self.worker.error_rotation_motor.connect(self.catch_motor_error)
+        self.acquisition_control.Acquisition_start.connect(self.worker.start_acquisition)
+        self.motor_rotation_control.send_command_rotation.connect(self.worker.send_rotation_command)
+        self.motor_attenuation_control.send_command_attenation.connect(self.worker.send_attenuator_command)
+        #TODO add methods to deal with data 
+        self.worker.new_acquisition_data.connect(self.pass_data)
+        # Step 6: Start the thread
+        self.thread.start()
+        
+    @pyqtSlot(int,str)
+    def catch_motor_error(self,nbr_try,error_code):
+        if self.motor_error_box:
+            self.motor_error_box.close()
+        self.motor_error_box=QtWidgets.QMessageBox()
+        self.motor_error_box.setWindowFlags(Qt.WindowStaysOnTopHint)
+        if error_code=="2":
+            self.motor_error_box.setWindowTitle("CRITICAL ERROR")
+            self.motor_error_box.setText("LIMIT SWITCHES HAVE BEEN REACHED MOTOR STOPPED, PROGRAMM WILL QUIT NOW")
+            log.critical("LIMIT SWITCHES HAVE BEEN REACHED !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            self.motor_error_box.exec_()
+        elif error_code=="-5":
+            self.motor_error_box.setWindowTitle("Initilisation error")
+            self.motor_error_box.setText("Error while initiating the attenuator position, on Ok the programm will stop, \n Please make sure the attenuator is not blocked")
+            self.motor_error_box.exec_()
+            log.error("Error while initiating the attenuator position")
+        elif error_code=="0":
+            self.motor_error_box.setWindowTitle("Rotation error")
+            if nbr_try==0:
+                self.motor_error_box.setText("Error during the rotation of the turntable, The programm will attemp to restart the motor, \n Please Wait...")
+                self.motor_error_box.exec_()
+                log.error("Error during the rotation of the turntable")
+                if self.worker.previous_command_arduino!="" and self.worker.previous_command_arduino[0:9]=="ROTATION":
+                    command_str=self.worker.previous_command_arduino.split(",")
+                    position_goal=int(command_str[1])     
+                    self.worker.send_rotation_command(position_goal)
+            else: 
+                self.motor_error_box.setText("Rotation error happended again, The programm will stop the programm please verify the rotation motor under the turntable before restarting.")
+                self.motor_error_box.exec_()
+                log.error("Rotation error happended again")
+        elif error_code=="1":
+            self.motor_error_box.setWindowTitle("Attenuator error")
+            if nbr_try==0:
+                self.motor_error_box.setText("Error during the rotation of the attenuator, The programm will attemp to restart the motor, \n Please Wait...")
+                self.motor_error_box.exec_()
+                log.error("Error during the rotation of the attenuator")
+                if self.worker.previous_command_arduino!="" and self.worker.previous_command_arduino[0:10]=="ATTENUATOR":
+                    command_str=self.worker.previous_command_arduino.split(",")
+                    position_goal=int(command_str[1])     
+                    self.worker.send_rotation_command(position_goal)
+            else: 
+                self.motor_error_box.setText("Attenuator error happended again, The programm will stop the programm please verify the attenuator motor before restarting.")
+                self.motor_error_box.exec_()
+                log.error("Attenuator error happended again")
+                
+    def closeEvent(self, *args, **kwargs):
+        super(container.QWidgetContainer, self).closeEvent(*args, **kwargs)
+        self.worker.thread_finished.emit() 
+        
+   
+    @pyqtSlot(bytes)   
+    def pass_data(self,data):
+        print(data)
+        array=np.frombuffer(data,dtype=np.int8)
 
 # logging file to trace exceptions
 
@@ -168,14 +255,35 @@ def show_exception_box(log_msg):
             errorbox.setWindowFlags(Qt.WindowStaysOnTopHint)
             errorbox.setWindowTitle("Error Message")
             errorbox.setText("log of the error (last line will probably indicate what it is about):\n{0}".format(log_msg))
-            errorbox.exec_()
-            
+            errorbox.exec_()          
     else:
         log.debug("No QApplication instance available.")
+
+       
+# Pop up window when connection Arduino or FPGA is lost, close the programm after
+
+def catch_connection_lost(error_msg):
+    connection_lost_box=QtWidgets.QMessageBox()
+    connection_lost_box.setWindowFlags(Qt.WindowStaysOnTopHint)
+    connection_lost_box.setWindowTitle("Connection lost")
+    if "Arduino_not_connected" in error_msg:
+        connection_lost_box.setText("Arduino not connected, on OK the programm will stop, \n please make sure Arduino is connected before restarting.")
+        log.error("Arduino not connected")
+    elif "Arduino" in error_msg:
+        connection_lost_box.setText("Connection to Arduino lost, on OK the programm will stop, \n please make sure Arduino is connected before restarting.")
+        log.error("Connection to Arduino lost")
+    if "FPGA" in error_msg:
+        connection_lost_box.setText("Connection to FPGA lost, on OK the programm will stop,\n please make sure FPGA is connected before restarting.")
+        log.error("Connection to FPGA lost")
+    connection_lost_box.exec_()
+    window.close()
+   
 # get Exceptions and treat it 
+    
 class UncaughtHook(QObject):
     _exception_caught = pyqtSignal(str)
-
+    connection_lost= pyqtSignal(str)
+    
     def __init__(self, *args, **kwargs):
         super(UncaughtHook, self).__init__(*args, **kwargs)
         # this registers the exception_hook() function as hook with the Python interpreter
@@ -183,25 +291,33 @@ class UncaughtHook(QObject):
 
         # connect signal to execute the message box function always on main thread
         self._exception_caught.connect(show_exception_box)
-
+        self.connection_lost.connect(catch_connection_lost)
     def exception_hook(self, exc_type, exc_value, exc_traceback):
         """Function handling uncaught exceptions.
         It is triggered each time an uncaught exception occurs. 
         """
         if issubclass(exc_type, KeyboardInterrupt):
             # ignore keyboard interrupt to support console applications
-            sys.__excepthook__(exc_type, exc_value, exc_traceback)
+            sys.__excepthook__(exc_type, exc_value, exc_traceback) 
+        #TODO un comment this part when arduino will be connected
+        # elif issubclass(exc_type, serial.SerialTimeoutException):
+        #     log_msg = '\n'.join([''.join(traceback.format_tb(exc_traceback)),
+        #                          '{0}: {1}'.format(exc_type.__name__, exc_value)])
+        #     self.connection_lost.emit(log_msg)
+        # elif issubclass(exc_type, serial.serialutil.SerialException):
+        #     log_msg = "Arduino"
+        #     self.connection_lost.emit(log_msg)
+        # elif issubclass(exc_type, UnboundLocalError):
+        #     log_msg = "Arduino_not_connected"
+        #     self.connection_lost.emit(log_msg)
         else:
+           
             log_msg = '\n'.join([''.join(traceback.format_tb(exc_traceback)),
                                  '{0}: {1}'.format(exc_type.__name__, exc_value)])
             # trigger message box show
-            log.critical("Uncaught exception:\n {0}".format(log_msg))
+            log.error("Uncaught exception:\n {0}".format(log_msg))
             self._exception_caught.emit(log_msg)
             
-
-           
-
-
 # Main 
 
 app=0         
@@ -211,4 +327,5 @@ qt_exception_hook = UncaughtHook()
 window = Window()
 window.setup()
 window.show()
+
 app.exec_()

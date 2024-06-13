@@ -31,7 +31,7 @@ class Sequence(container.QGroupBoxContainer):
             self.params.w["load_sequence"].clicked.connect(self.load_sequence)
             self.params.add_check_box("sequence_loaded", caption="Sequence Loaded")
             self.params.set_enabled(names="sequence_loaded",enabled=False)
-            self.params.w["sequence_loaded"].setStyleSheet("\n QCheckBox:disabled{color: #DFE1E2;}\n QCheckBox:indicator:checked:disabled{ image:url(utils/ressources/checkbox_checked_samll.png);}  QCheckBox:indicator:unchecked:disabled{image:url(utils/ressources/checkbox_unchecked_samll.png);}")
+            self.params.w["sequence_loaded"].setStyleSheet("\n QCheckBox:disabled{color: #DFE1E2;}\n QCheckBox:indicator:checked:disabled{ image:url(utils/ressources/round_checkbox_checked_samll.png);}  QCheckBox:indicator:unchecked:disabled{image:url(utils/ressources/round_checkbox_unchecked_samll.png);}")
         self.params.add_spacer(15)
         with self.params.using_new_sublayout("buttons", "hbox"):
             self.params.add_button("start_sequence", caption="Start Sequence")

@@ -7,7 +7,6 @@ Created on Friday January 26 2024
 This file is part of the DLS Control code used in LIPhy.
 """
 
-
 import serial 
 import time
 import sys 
@@ -25,30 +24,30 @@ class Arduino_communication():
             Baud rate for serial communication with Arduino. 
             The default is 115200.
         timeout : int, optional
-            Timeout for reading and writing values if this appends 
+            Timeout for reading and writing values if this happens 
         Returns
         -------
         None.
 
         """
         for port, desc, hwid in sorted(list_ports.comports()): # list all available ports
-            if "COM3" in port:
+            if "COM5" in port:
                 arduino_port=port  
         try: 
             self.arduino = serial.Serial(arduino_port, baud_rate,timeout=timeout, write_timeout=timeout)
         except UnboundLocalError:
-            print("Arduino not connected or not recognized by the computer") # To change send signal to interface graphique 
             raise
             
         time.sleep(Arduino_interface.INITIALISATION_TIME) # here to let enough time to Initialise connection with arduino 
          
-        # Ping aruino to see if connected 
+        # Ping arduino to see if connected 
         
         string_to_send=b"P"
         self.arduino.write(string_to_send)
         is_connected=self.arduino.read(5)
         if is_connected !="ALIVE":
-            raise serial.SerialTimeoutException
+            raise serial.SerialTimeoutException("Arduino")
+        #TODO add here initilisation part of attenuator motor
     
     """
     UNIT CONVERSIONS 
@@ -110,7 +109,7 @@ class Arduino_communication():
     
     def var_to_byte(self,variable):
         """
-        Convert the string value to byte to be send 
+        Convert the value to byte to be send 
 
         Parameters
         ----------
@@ -156,66 +155,43 @@ class Arduino_communication():
             string_to_send="MT"+direction_rotation+str(angle_rotation_dec)
             self.arduino.write(self.var_to_byte(string_to_send)) # angle_rotation_dec is float 
         except serial.SerialTimeoutException:
-            print("connection error")
-            raise
-        movement_finished=False
-        while movement_finished==False:
-            if self.arduino.inWaiting()==0:
-                time.sleep(0.1)
-            else:
-                try:
-                    message_arduino_movement=self.arduino.read_until()
-                except serial.SerialException:
-                    print("connection error")
-                    raise
-                if "movement_finished" in message_arduino_movement :
-                    movement_finished=True
-                    try: 
-                       self.position_motor_rotation_dec=self.arduino.read_until()
-                    except serial.SerialException:
-                       print("connection error")
-                       raise
+            raise serial.SerialTimeoutException("Arduino")
+       
         
-                       
-    def send_read_position_turntable(self):
+    
+    def send_rotation_attenuator(self, position_to_reach):
         """
+        # position to reach is the number shown on screen 0,1,2,3.. it is converted here in deg 
+        Parameters
+        ----------
+        position_to_reach : int
+            attenuator number to reach. 
+
         Returns
         -------
-        position_turntable : float
-            position of the turntable (in encoder format maybe changed later)
+        None.
 
         """
-        # check if there is something in the buffer if yes, remove it
-        if self.arduino.inWaiting()>0:
-            self.arduino.reset_input_buffer()
-        self.arduino.write(self.var_to_byte("RT"))
-        while self.arduino.inWaiting()==0:
-            time.sleep(0.1)
+        angle_to_reach=Arduino_interface.ATTENUATOR_MOTOR_POSITION(position_to_reach)
         try: 
-            position_turntable=self.arduino.read_until()
-            position_turntable=self.hex_to_float(position_turntable)
-        except serial.SerialException:
-            print("connection erorr")
-            raise
-        return position_turntable
-    
-    def send_rotation_attenuator(self ):
-        pass
-    #TODO test the attenuator motor with the new microstep driver to know how 
-    #TODO to deal with it and same for reading the position
-                           
+            string_to_send="MA"+angle_to_reach
+            self.arduino.write(self.var_to_byte(string_to_send))
+        except serial.SerialTimeoutException:
+            raise serial.SerialTimeoutException("Arduino")
+            
     def close(self):
          """
          Close communication with Arduino  
          """
          self.arduino.close()
-         print ('Connection to Arduino closed')
           
 
-try :
-    Arduino_comm=Arduino_communication()
-except serial.SerialTimeoutException:
-    raise
-    sys.exit()
-Arduino_comm.send_rotation_turntable(80, "P")
-Arduino_comm.close()
+# try :
+#     Arduino_comm=Arduino_communication()
+# except serial.SerialTimeoutException as err:
+#     raise
+#     print(sys.exc_info()[1].args[0])
+   
+
+# Arduino_comm.send_rotation_turntable(80, "P")
+# Arduino_comm.close()

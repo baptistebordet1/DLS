@@ -7,9 +7,8 @@ Created on Thursday May 23 2024
 
 import pyqtgraph
 from PyQt5 import QtWidgets, QtCore
-from pylablib import widgets
 from pylablib.core.gui.widgets import param_table, container
-import time
+
 
 class Calibration(container.QFrameContainer):
     def setup(self):
