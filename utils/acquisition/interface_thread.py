@@ -6,7 +6,11 @@ Created on Wednesday May 29 2024
 """
 
 from PyQt5.QtCore import QProcess, QProcessEnvironment, QObject, pyqtSignal, QTimer, pyqtSlot
-from utils import arduino_interface
+from utils import arduino_interface, FPGA_interface, constants
+from pathlib import Path 
+import os
+import struct 
+import numpy as np
  
 class Worker(QObject):
     
@@ -18,6 +22,8 @@ class Worker(QObject):
     error_rotation_motor=pyqtSignal(int,str)
     error_attenuation_motor=pyqtSignal(int,str)
     critical_error=pyqtSignal(int,str)
+    kill_process=pyqtSignal()
+    calibration_step_done=pyqtSignal()
     
     def setup(self):
         self.dict_status={"current_action":"None", "detection_angle":None, "attenuation_value":None, 
@@ -32,14 +38,23 @@ class Worker(QObject):
         self.tried_restart_attenuator=0
         self.tried_restart_rotation=0
         #TODO uncomment this part when arduino is connected 
-        self.arduino_comm=arduino_interface.Arduino_communication()
+        #self.arduino_comm=arduino_interface.Arduino_communication()
         self.read_arduino_timer=QTimer(self)
         self.read_arduino_timer.setInterval(100)
         self.read_arduino_timer.timeout.connect(self.read_arduino)
-        
-        #TODO add here the values of the previous command send to arduino (in case motor is stalled to resend the command)
+        #self.read_arduino_timer.start()
         self.previous_command_arduino=""
+        self.PD_timer=QTimer(self)
+        self.PD_timer.setInterval(500)
+        self.PD_timer.timeout.connect(self.ask_photodiode_value)
+        self.fpga_serial_ascii=FPGA_interface.FPGA_serial_ASCII()
+        self.fpga_serial_data=FPGA_interface.FPGA_serial_data() # to be passed in subprocess 
+        #self.PD_timer.start()
         
+    def ask_photodiode_value(self):
+        self.photodiode_val=self.fpga_serial_ascii.ask_pd_value()
+        # TODO add here an emit signal for the update plot 
+            
     def read_arduino(self):
         while self.arduino_comm.arduino.in_waiting()>0:
             self.received_message=self.arduino_comm.arduino.read_until()
@@ -60,12 +75,18 @@ class Worker(QObject):
                 position_motor=self.arduino_comm.converter_angle_rotation_turntable_dec_to_deg(self, float(self.received_message[17:-2]))
                 self.dict_motors_positions["Rotation motor pos"]=position_motor
                 self.dict_status["current_action"]="None"
+            #TODO add here the recupaeration of the motor position in the rotation and send it to the calibration control 
+            elif "calibration_movement_finished" in self.received_message:
+                self.calibration_step_done.emit()
             elif "movement_attenuation_finished" in self.received_message:
                 #TODO check the value of attenuator position maybe convert it via dict in constants 
                 position_attenuator=int(self.received_message[29:-2])
                 self.dict_motors_positions["Attenuation motor pos"]=position_attenuator
                 self.dict_status["current_action"]="None"
-
+                
+    def send_update_gui_command(self):
+        self.update_gui_data.emit(self.dict_status, self.dict_motors_positions)
+        
     @pyqtSlot(float)            
     def send_rotation_command(self,position_goal):
         #TODO test that the condition is in the right order
@@ -75,49 +96,149 @@ class Worker(QObject):
             direction_rotation="N"
         self.arduino_comm.send_rotation_turntable(position_goal, direction_rotation)
         self.previous_command_arduino="ROTATION,"+str(position_goal)
+        
+    @pyqtSlot()
+    def send_calibration_turntable(self):
+        self.arduino_comm.send_rotation_calibration_turntable()
     
     @pyqtSlot(int) 
     def send_attenuator_command(self,position_goal):
         self.arduino_comm.send_rotation_attenuator(position_goal)
         self.previous_command_arduino="ATTENUATOR"+str(position_goal)
-        
-    def send_update_gui_command(self):
-        self.update_gui_data.emit(self.dict_status, self.dict_motors_positions)
-     
-    @pyqtSlot(str, str, str, str, int, int)
-    def start_acquisition(self,folder_path, filename, extenstion_file, separator, tau_max, acquisition_time):
+         
+    @pyqtSlot(str, str, str, str, str, int, int)
+    def prepare_acquisition(self,folder_path, filename, extenstion_file, separator, exp_type,  tau_max, acquisition_time):
         print("started_acquisition")
-        # and emit signal to send to update plots (probably better to send bytes than array)
         self.sub_process_acquisition=process_Acquisition()
-        self.sub_process_acquisition.setup(self)
+        self.sub_process_acquisition.setup(self,folder_path,filename,extenstion_file,separator, exp_type, tau_max, acquisition_time)
+   
+    @pyqtSlot(str,int)
+    def start_acquisition(self,exp_type,acq_time):
+        
+        self.acquisition_timer=QTimer()
+        self.acquisition_timer.setSingleShot(True)
+        self.acquisition_timer.setInterval(acq_time)
+        self.acquisition_timer.timeout.connect(self.stop_acquisition)
+        self.fpga_serial_ascii.start_acq(exp_type)
+        self.acquisition_timer.start()
+        self.dict_status["current_action"]="Acquisition"
+    
+    @pyqtSlot(str)
+    def prepare_free_running(self, exp_type):
+        self.sub_process_acquisition=free_running_Acquisition()
+        self.sub_process_acquisition.setup(self,exp_type)
+        
+    @pyqtSlot(str)
+    def start_free_running(self,exp_type):
+        self.fpga_serial_ascii.start_acq(exp_type)
+        self.dict_status["current_action"]="Free running"
         
     @pyqtSlot()
     def stop_acquisition(self):
-        pass
-    #TODO send message to fpga to stop communication 
+        self.fpga_serial_ascii.stop_acq()
+        self.kill_process.emit()
         
-class process_Acquisition():
-    def setup(self,worker):
+class process_Acquisition(QObject):
+    ready_for_acquisition=pyqtSignal(str,int)
+    
+    def setup(self,worker,folder_path,filename,extenstion_file,separator, exp_type, tau_max, acquisition_time):
        self.worker=worker
+       self.folder_path=folder_path
+       self.filename=filename
+       self.extension_file=extenstion_file
+       self.separator=separator
+       self.exp_type=exp_type
+       self.tau_max=tau_max
+       self.acquisition_time=acquisition_time
+       self.message_length=constants.Acquisition_parameters.LENGTH_TYPE_EQ[self.exp_type]
        self.env=QProcessEnvironment.systemEnvironment()
        self.p = QProcess()
        self.p.setProcessEnvironment(self.env)
-       self.p.start("python", ["utils/acquisition/acquisition_process.py"])
-       self.p.readyReadStandardOutput.connect(self.handle_stdout)
+       self.G="h"
+       self.filesave=open(Path(os.path.join(self.folder_path,self.filename,self.extension_file)),"w")
+       #TODO modify here the passed arguments to be serial fpga 
+       self.p.start("python", ["utils/acquisition/acquisition_process.py",self.G])
+       self.p.readyReadStandardOutput.connect(self.handle_process_ready)
        self.p.readyReadStandardError.connect(self.handle_stderr)
        self.p.finished.connect(self.process_finished)
-   
+       self.ready_for_acquisition.connect(self.worker.start_acquisition)
+       self.worker.kill_process.connect(self.finish_process)
+       
+    @pyqtSlot()
+    def finish_process(self):
+        self.p.kill()
+        
     def handle_stderr(self):
         data = self.p.readAllStandardError()
         stderr = bytes(data).decode("utf8")
         raise Exception(stderr)
         
+    def handle_process_ready(self):
+        data=self.p.readAllStandardOutput()
+        if data=="ready":
+            self.p.readyReadStandardOutput.disconnect(self.handle_process_ready)
+            self.p.readyReadStandardOutput.connect(self.handle_stdout)
+            self.ready_for_acquisition.emit(self.exp_type,self.acquisition_time)
+            
+            
     def handle_stdout(self):
         data = self.p.readAllStandardOutput()
-        data=bytes(data)
-        self.worker.new_acquisition_data.emit(data)
+        data_use=struct.unpack(">H"+"H"*self.message_length,data)
+        self.data_array=np.array(data_use,dtype=np.uint16)
+        self.data_array=np.interp(self.data_array,[0,65535],[0,1])
+        self.worker.new_acquisition_data.emit(self.data_array)
+        self.filesave.write(np.array2string(self.data_array,separator=self.separator,max_line_width=np.inf)+"\n")
 
     def process_finished(self):
         print(self.p.ExitStatus())
         print("finished")
         self.p = None
+        self.filesave.close()
+
+class free_running_Acquisition(QObject):
+    ready_for_acquisition=pyqtSignal(str)
+    def setup(self,worker, exp_type):
+       self.worker=worker
+       self.exp_type=exp_type
+       self.message_length=constants.Acquisition_parameters.LENGTH_TYPE_EQ[self.exp_type]
+       self.env=QProcessEnvironment.systemEnvironment()
+       self.p = QProcess()
+       self.p.setProcessEnvironment(self.env)
+       self.G="h"
+       #TODO modify here the passed arguments to be serial fpga 
+       self.p.start("python", ["utils/acquisition/acquisition_process.py",self.G])
+       self.p.readyReadStandardOutput.connect(self.handle_process_ready)
+       self.p.readyReadStandardError.connect(self.handle_stderr)
+       self.p.finished.connect(self.process_finished)
+       self.ready_for_acquisition.connect(self.worker.start_free_running)
+       self.worker.kill_process.connect(self.finish_process)
+       
+    @pyqtSlot()
+    def finish_process(self):
+        self.p.kill()
+        
+    def handle_stderr(self):
+        data = self.p.readAllStandardError()
+        stderr = bytes(data).decode("utf8")
+        raise Exception(stderr)
+        
+    def handle_process_ready(self):
+        data=self.p.readAllStandardOutput()
+        if data=="ready":
+            self.p.readyReadStandardOutput.disconnect(self.handle_process_ready)
+            self.p.readyReadStandardOutput.connect(self.handle_stdout)
+            self.ready_for_acquisition.emit(self.exp_type)
+                        
+    def handle_stdout(self):
+        data = self.p.readAllStandardOutput()
+        data_use=struct.unpack(">H"+"H"*self.message_length,data)
+        self.data_array=np.array(data_use,dtype=np.uint16)
+        self.data_array=np.interp(self.data_array,[0,65535],[0,1])
+        self.worker.new_acquisition_data.emit(self.data_array)
+
+    def process_finished(self):
+        print(self.p.ExitStatus())
+        print("finished")
+        self.p = None
+        
+        

@@ -13,6 +13,7 @@ from utils.GUI import display_ctl
 from utils.GUI import plots_ctl
 from utils.GUI import acquisition_ctl
 from utils.GUI import sequence_ctl
+from utils.GUI import free_running_ctl
 
 from utils import constants
 
@@ -27,7 +28,8 @@ import sys
 import traceback
 import logging
 import numpy as np 
-import serial 
+import serial
+
 
 class Window(container.QWidgetContainer):
     def setup(self):
@@ -103,8 +105,16 @@ class Window(container.QWidgetContainer):
             self.motor_attenuation_control.setup()
             self.add_padding(kind="vertical")
             
+            #Free running tab 
+            self.free_running_tab=self.add_to_layout(container.QFrameContainer(self),location=(2))
+            self.free_running_tab.setup()
+            self.free_running_tab.setMaximumWidth(int(0.15*self.screen_w))
+            self.free_running_tab.setMaximumHeight(int(0.15*self.screen_h))
+            self.free_running_control=self.free_running_tab.add_to_layout(free_running_ctl.Free_running(self))
+            self.free_running_control.setup()
+            
             # Saving tab
-            self.saving_tab=self.add_to_layout(container.QFrameContainer(self),location=(4))
+            self.saving_tab=self.add_to_layout(container.QFrameContainer(self),location=(5))
             self.saving_tab.setup()
             self.saving_tab.setMaximumWidth(int(0.15*self.screen_w))
             self.saving_tab.setMaximumHeight(int(0.15*self.screen_h))
@@ -112,7 +122,7 @@ class Window(container.QWidgetContainer):
             self.saving_control.setup()
             
             # Acquistion tab
-            self.acquisition_tab=self.add_to_layout(container.QFrameContainer(self),location=(2))
+            self.acquisition_tab=self.add_to_layout(container.QFrameContainer(self),location=(3))
             self.acquisition_tab.setup()
             self.acquisition_tab.setMaximumWidth(int(0.15*self.screen_w))
             self.acquisition_tab.setMaximumHeight(int(0.15*self.screen_h))
@@ -120,7 +130,7 @@ class Window(container.QWidgetContainer):
             self.acquisition_control.setup(self.saving_control)
                        
             # Sequence tab
-            self.sequence_tab=self.add_to_layout(container.QFrameContainer(self),location=(3))
+            self.sequence_tab=self.add_to_layout(container.QFrameContainer(self),location=(4))
             self.sequence_tab.setup()
             self.sequence_tab.setMaximumWidth(int(0.15*self.screen_w))
             self.sequence_tab.setMaximumHeight(int(0.15*self.screen_h))
@@ -130,9 +140,6 @@ class Window(container.QWidgetContainer):
             self.initialize_default_values()
             
             self.start_interface_thread()
-           
-            
-            
             
     # load config_dict into the different part of the control 
     
@@ -173,14 +180,21 @@ class Window(container.QWidgetContainer):
         self.worker.fail_init_attenuator.connect(self.catch_motor_error)
         self.worker.error_attenuation_motor.connect(self.catch_motor_error)
         self.worker.error_rotation_motor.connect(self.catch_motor_error)
-        self.acquisition_control.Acquisition_start.connect(self.worker.start_acquisition)
+        self.free_running_control.free_running_start.connect(self.worker.prepare_free_running)
+        self.free_running_control.free_runing_stop.connect(self.worker.stop_acquisition)
+        self.acquisition_control.Acquisition_start.connect(self.worker.prepare_acquisition)
         self.motor_rotation_control.send_command_rotation.connect(self.worker.send_rotation_command)
         self.motor_attenuation_control.send_command_attenation.connect(self.worker.send_attenuator_command)
+        self.motor_rotation_control.start_calib.connect(self.connect_signals_start_calib)
+        
         #TODO add methods to deal with data 
         self.worker.new_acquisition_data.connect(self.pass_data)
         # Step 6: Start the thread
         self.thread.start()
         
+    def connect_signals_start_calib(self):   
+        self.motor_rotation_control.calib_window.send_calibration_step.connect(self.worker.send_calibration_turntable)
+        self.worker.calibration_step_done.connect(self.motor_rotation_control.calib_window.one_measurement)
     @pyqtSlot(int,str)
     def catch_motor_error(self,nbr_try,error_code):
         if self.motor_error_box:
@@ -218,6 +232,7 @@ class Window(container.QWidgetContainer):
                 self.motor_error_box.exec_()
                 log.error("Error during the rotation of the attenuator")
                 if self.worker.previous_command_arduino!="" and self.worker.previous_command_arduino[0:10]=="ATTENUATOR":
+                    self.worker.arduino_comm.arduino.write(b"I")
                     command_str=self.worker.previous_command_arduino.split(",")
                     position_goal=int(command_str[1])     
                     self.worker.send_rotation_command(position_goal)
@@ -266,6 +281,7 @@ def catch_connection_lost(error_msg):
     connection_lost_box=QtWidgets.QMessageBox()
     connection_lost_box.setWindowFlags(Qt.WindowStaysOnTopHint)
     connection_lost_box.setWindowTitle("Connection lost")
+    #TODO modify the if conditions yo make the differnece between fpag ascii and serial line 
     if "Arduino_not_connected" in error_msg:
         connection_lost_box.setText("Arduino not connected, on OK the programm will stop, \n please make sure Arduino is connected before restarting.")
         log.error("Arduino not connected")
@@ -299,17 +315,22 @@ class UncaughtHook(QObject):
         if issubclass(exc_type, KeyboardInterrupt):
             # ignore keyboard interrupt to support console applications
             sys.__excepthook__(exc_type, exc_value, exc_traceback) 
-        #TODO un comment this part when arduino will be connected
-        # elif issubclass(exc_type, serial.SerialTimeoutException):
-        #     log_msg = '\n'.join([''.join(traceback.format_tb(exc_traceback)),
-        #                          '{0}: {1}'.format(exc_type.__name__, exc_value)])
-        #     self.connection_lost.emit(log_msg)
-        # elif issubclass(exc_type, serial.serialutil.SerialException):
-        #     log_msg = "Arduino"
-        #     self.connection_lost.emit(log_msg)
-        # elif issubclass(exc_type, UnboundLocalError):
-        #     log_msg = "Arduino_not_connected"
-        #     self.connection_lost.emit(log_msg)
+        elif issubclass(exc_type, serial.SerialTimeoutException):
+            if "Arduino" == serial.SerialTimeoutException.args[0]:
+                log_msg = "Arduino"
+            if "FPGA_data" == serial.SerialTimeoutException.args[0]:
+                log_msg="FPGA_data"
+            if "FPGA_ascii" == serial.SerialTimeoutException.args[0]:
+                log_msg="FPGA_ascii"
+            self.connection_lost.emit(log_msg)
+        elif issubclass(exc_type, UnboundLocalError):
+            if "Arduino" == UnboundLocalError.args[0]:
+                log_msg = "Arduino_not_connected"
+            if "FPGA_data" == UnboundLocalError.args[0]:
+                log_msg="FPGA_data_not_connected"
+            if "FPGA_ascii" == UnboundLocalError.args[0]:
+                log_msg="FPGA_ascii_not_connected"
+            self.connection_lost.emit(log_msg)
         else:
            
             log_msg = '\n'.join([''.join(traceback.format_tb(exc_traceback)),

@@ -12,7 +12,7 @@ import pathlib
 
 class Saving(container.QGroupBoxContainer):
     def setup(self):
-        self.supported_format=[".csv",".txt",".xls",".xlsx"]
+        self.supported_format=[".csv",".txt"]
         super().setup(caption="Saving")
         self.params=self.add_to_layout(param_table.ParamTable(self))
         self.params.setup(name="save_table")
@@ -27,7 +27,7 @@ class Saving(container.QGroupBoxContainer):
             self.params.add_button("browse_filename",caption="Browse File",location=("next",0,2,1))
             self.params.w["browse_filename"].clicked.connect(self.browse_button_filename)
             
-        self.params.add_combo_box("format", label="Format:", options=[".csv",".txt",".xls",".xlsx"],index_values=[".csv",".txt",".xls",".xlsx"])
+        self.params.add_combo_box("format", label="Format:", options=[".csv",".txt"],index_values=[".csv",".txt"])
         self.params.add_combo_box("separator",label="Separator:", options=[",",";"],index_values=[",",";"])   
           
     def browse_button_folder(self):
@@ -59,7 +59,7 @@ class Saving(container.QGroupBoxContainer):
     def default_values(self, config_dict):
         self.params.v["folder_path"]=config_dict["saving_folder_path"]
         self.params.v["file_path"]=config_dict["saving_filename"]
-        if config_dict["saving_file_format"] in [".csv",".txt",".xls",".xlsx"]:
+        if config_dict["saving_file_format"] in [".csv",".txt"]:
             self.params.v["format"]=config_dict["saving_file_format"]
         else: 
             QMessageBox.warning(self, "Wrong file format", "default format of the saving file is incorrect in the configuration file \n the command will be ignored ")

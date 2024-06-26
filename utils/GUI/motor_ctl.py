@@ -10,7 +10,7 @@ from utils.GUI import calibration_ctl
 
 class Motor_rotation(container.QFrameContainer):
     send_command_rotation=pyqtSignal(float)
-
+    start_calib=pyqtSignal()
     def setup(self):
         
         super().setup()
@@ -27,9 +27,10 @@ class Motor_rotation(container.QFrameContainer):
         self.params.w["apply_rotation"].clicked.connect(self.send_command_move)
         
     def calibration_motor(self):
-        calib_window=calibration_ctl.Calibration(self)
-        calib_window.setup()
-        calib_window.show()
+        self.calib_window=calibration_ctl.Calibration(self)
+        self.calib_window.setup()
+        self.calib_window.show()
+        self.start_calib.emit()
     def update_position(self,dict_motors_positions):
         self.params.wv["position_rotation"]=dict_motors_positions["Rotation motor pos"]
     
@@ -38,6 +39,7 @@ class Motor_rotation(container.QFrameContainer):
     
 class Motor_attenuation(container.QFrameContainer):
     send_command_attenation=pyqtSignal(int)
+    
     def setup(self):
         super().setup()
         self.params=self.add_child("motor attenuation params",param_table.ParamTable(self))

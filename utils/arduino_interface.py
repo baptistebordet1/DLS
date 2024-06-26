@@ -31,23 +31,24 @@ class Arduino_communication():
 
         """
         for port, desc, hwid in sorted(list_ports.comports()): # list all available ports
-            if "COM5" in port:
+        #TODO check if this works on other computers with Arduino Mega 2560
+            if "Arduino" in desc:
                 arduino_port=port  
         try: 
             self.arduino = serial.Serial(arduino_port, baud_rate,timeout=timeout, write_timeout=timeout)
         except UnboundLocalError:
-            raise
+            raise UnboundLocalError("Arduino")
             
         time.sleep(Arduino_interface.INITIALISATION_TIME) # here to let enough time to Initialise connection with arduino 
          
         # Ping arduino to see if connected 
         
-        string_to_send=b"P"
+        string_to_send=b"C"
         self.arduino.write(string_to_send)
         is_connected=self.arduino.read(5)
         if is_connected !="ALIVE":
             raise serial.SerialTimeoutException("Arduino")
-        #TODO add here initilisation part of attenuator motor
+        self.arduino.write(b"I")
     
     """
     UNIT CONVERSIONS 
@@ -152,11 +153,17 @@ class Arduino_communication():
         """
         angle_rotation_dec=self.converter_angle_rotation_turntable_deg_to_dec(angle_rotation)
         try:
-            string_to_send="MT"+direction_rotation+str(angle_rotation_dec)
-            self.arduino.write(self.var_to_byte(string_to_send)) # angle_rotation_dec is float 
+            string_to_send="MT"+direction_rotation+str(angle_rotation_dec) # angle_rotation_dec is float 
+            self.arduino.write(self.var_to_byte(string_to_send)) 
         except serial.SerialTimeoutException:
             raise serial.SerialTimeoutException("Arduino")
        
+    def send_rotation_calibration_turntable(self):
+        try:
+            string_to_send="E"+str(Arduino_interface.CALIBRATION_STEPS)
+            self.arduino.write(self.var_to_byte(string_to_send)) 
+        except serial.SerialTimeoutException:
+            raise serial.SerialTimeoutException("Arduino")
         
     
     def send_rotation_attenuator(self, position_to_reach):

@@ -13,6 +13,8 @@ class Arduino_interface():
     TURNTABLE_ANGLE_MAX_DEG=180 # 180° angle 
     TURNTABLE_ANGLE_MAX_DEC=TURNTABLE_ANGLE_MIN_DEC+REDUCTION_RATIO*180 # calculated angle from the 0 position thanks to reduction ration 
     ATTENUATOR_MOTOR_POSITION={0:"40", 1:"80", 2:"120",3:"160",4:"200",5:"240",6:"280",7:"320",8:"360"}
+    CALIBRATION_STEPS= 200 # (must be an int) number of steps done before a new measurement is made for the turntable calibration
+    MAX_ROTATION_FULL_TURN=5600 #8 max number of rotation of the rotation motor (one full trun is 200 steps)
     
 class Acquisition_time_limit():
     TAU_MIN=0 # ms
@@ -20,6 +22,8 @@ class Acquisition_time_limit():
     ACQ_TIME_MIN=1 #s 
     ACQ_TIME_MAX=100 #s 
     
+class Acquisition_parameters():
+    LENGTH_TYPE_EQ={"AUTO11":160, "AUTO22":160, "AUTO12":320, "CROSS":320} #TODO modify accordingly the message lengths 
 
 class default_configuration():
     def __init__(self,window):

@@ -1,24 +1,17 @@
-2024-06-13 11:32:26,952 - __main__ - ERROR - Uncaught exception:
-   File "C:\Users\Raphael Girault\Desktop\DLS_git\utils\acquisition\interface_thread.py", line 35, in setup
-    self.arduino_comm=arduino_interface.Arduino_communication()
-                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Raphael Girault\Desktop\DLS_git\utils\arduino_interface.py", line 37, in __init__
-    self.arduino = serial.Serial(arduino_port, baud_rate,timeout=timeout, write_timeout=timeout)
-                                 ^^^^^^^^^^^^
+2024-06-25 16:03:53,053 - __main__ - ERROR - Uncaught exception:
+   File "C:\Users\Raphael Girault\Desktop\DLS_git\utils\acquisition\interface_thread.py", line 50, in setup
+    self.fpga_serial_ascii=FPGA_interface.FPGA_serial_ASCII()
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Raphael Girault\Desktop\DLS_git\utils\FPGA_interface.py", line 26, in __init__
+    self.FPGA_ascii = serial.Serial(self.FPGA_ascii_port, baud_rate=self.baudrate,parity=self.parity, bytesize=self.bytesize)
+                                    ^^^^^^^^^^^^^^^^^^^^
 
-UnboundLocalError: cannot access local variable 'arduino_port' where it is not associated with a value
+AttributeError: 'FPGA_serial_ASCII' object has no attribute 'FPGA_ascii_port'
   --------------------- 
-2024-06-13 11:32:29,676 - __main__ - ERROR - Uncaught exception:
-   File "C:\Users\Raphael Girault\Desktop\DLS_git\utils\acquisition\interface_thread.py", line 77, in send_rotation_command
-    self.arduino_comm.send_rotation_turntable(position_goal, direction_rotation)
+2024-06-25 16:03:57,498 - __main__ - ERROR - Uncaught exception:
+   File "C:\Users\Raphael Girault\Desktop\DLS_git\utils\GUI\calibration_ctl.py", line 40, in start_calibration
+    self.new_winsetup()
     ^^^^^^^^^^^^^^^^^
 
-AttributeError: 'Worker' object has no attribute 'arduino_comm'
-  --------------------- 
-2024-06-13 11:32:36,691 - __main__ - ERROR - Uncaught exception:
-   File "C:\Users\Raphael Girault\Desktop\DLS_git\utils\acquisition\interface_thread.py", line 83, in send_attenuator_command
-    self.arduino_comm.send_rotation_attenuator(position_goal)
-    ^^^^^^^^^^^^^^^^^
-
-AttributeError: 'Worker' object has no attribute 'arduino_comm'
+AttributeError: 'Calibration' object has no attribute 'new_winsetup'
   --------------------- 

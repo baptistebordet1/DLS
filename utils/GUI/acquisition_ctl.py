@@ -16,16 +16,17 @@ from PyQt5.QtCore import pyqtSignal
 from utils.constants import Acquisition_time_limit
 from utils.GUI import saving_ctl
 
-#TODO add start and stop methods 
+#TODO add stop methods 
 
 class Acquisition(container.QGroupBoxContainer):
-    Acquisition_start=pyqtSignal(str, str, str, str, int, int)
+    Acquisition_start=pyqtSignal(str, str, str, str,str,  int, int)
     Acquisition_stop=pyqtSignal()
     def setup(self,saving_control):
         self.saving_control=saving_control
         super().setup(caption="Acquisition")
         self.params=self.add_to_layout(param_table.ParamTable(self))
         self.params.setup(name="acquisition_table")
+        self.params.add_combo_box("experience_type",options=["Auto-correlation channel 1","Auto-correlation channel 2", "Auto-correlation channel 1 and 2", "Cross-correlation"],index_values=["AUTO11", "AUTO22", "AUTO12", "CROSS"],label="Experience Type")
         self.params.add_num_edit("corr_length",label="𝜏 max(ms):",limiter=(Acquisition_time_limit.TAU_MIN, Acquisition_time_limit.TAU_MAX))
         self.params.add_num_edit("acq_time",label="Acquisition Time(s):", limiter=(Acquisition_time_limit.ACQ_TIME_MIN,Acquisition_time_limit.ACQ_TIME_MAX ))
         with self.params.using_new_sublayout("buttons","hbox"):
@@ -57,4 +58,4 @@ class Acquisition(container.QGroupBoxContainer):
             QtWidgets.QMessageBox.warning(self,
                                           "Saving Folder doesn't exist", "The saving folder you indicated is unreachable, try browsing instead") 
             return
-        self.Acquisition_start.emit(folder_path, filename,extension_file,separator,self.params.v["corr_length"],self.params.v["acq_time"])
+        self.Acquisition_start.emit(folder_path, filename,extension_file,separator,self.params.v["experience_type"],self.params.v["corr_length"],self.params.v["acq_time"])

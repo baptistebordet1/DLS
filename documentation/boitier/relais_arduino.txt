@@ -1,0 +1,2 @@
+dimensions : 26*34
+trous M3 -0.5 de chaque coté 
