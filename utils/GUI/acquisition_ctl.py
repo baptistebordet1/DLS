@@ -26,7 +26,7 @@ class Acquisition(container.QGroupBoxContainer):
         super().setup(caption="Acquisition")
         self.params=self.add_to_layout(param_table.ParamTable(self))
         self.params.setup(name="acquisition_table")
-        self.params.add_combo_box("experience_type",options=["Auto-correlation channel 1","Auto-correlation channel 2", "Auto-correlation channel 1 and 2", "Cross-correlation"],index_values=["AUTO11", "AUTO22", "AUTO12", "CROSS"],label="Experience Type")
+        self.params.add_combo_box("experience_type",options=["Auto-corr chan. 1","Auto-corr chan. 2", "Auto-corr cha. 1 and 2", "Cross-corr"],index_values=["AUTO11", "AUTO22", "AUTO12", "CROSS"],label="Experience Type")
         self.params.add_num_edit("corr_length",label="𝜏 max(ms):",limiter=(Acquisition_time_limit.TAU_MIN, Acquisition_time_limit.TAU_MAX))
         self.params.add_num_edit("acq_time",label="Acquisition Time(s):", limiter=(Acquisition_time_limit.ACQ_TIME_MIN,Acquisition_time_limit.ACQ_TIME_MAX ))
         with self.params.using_new_sublayout("buttons","hbox"):

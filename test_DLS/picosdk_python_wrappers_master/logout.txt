@@ -1,0 +1,100 @@
+2024-07-05 16:07:21,463 - __main__ - ERROR - Uncaught exception:
+   File "C:\Users\DLS_Liphy\Desktop\DLS_git\utils\acquisition\interface_thread.py", line 54, in setup
+    self.fpga_serial_ascii=FPGA_interface.FPGA_serial_ASCII()
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DLS_Liphy\Desktop\DLS_git\utils\FPGA_interface.py", line 26, in __init__
+    self.FPGA_ascii = serial.Serial(self.FPGA_ascii_port, baud_rate=self.baudrate,parity=self.parity, bytesize=self.bytesize)
+                                    ^^^^^^^^^^^^^^^^^^^^
+
+AttributeError: 'FPGA_serial_ASCII' object has no attribute 'FPGA_ascii_port'
+  --------------------- 
+2024-07-05 16:08:21,499 - __main__ - ERROR - Uncaught exception:
+   File "C:\Users\DLS_Liphy\Desktop\DLS_git\utils\acquisition\interface_thread.py", line 54, in setup
+    self.fpga_serial_ascii=FPGA_interface.FPGA_serial_ASCII()
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DLS_Liphy\Desktop\DLS_git\utils\FPGA_interface.py", line 26, in __init__
+    self.FPGA_ascii = serial.Serial(self.FPGA_ascii_port, baud_rate=self.baudrate,parity=self.parity, bytesize=self.bytesize)
+                                    ^^^^^^^^^^^^^^^^^^^^
+
+AttributeError: 'FPGA_serial_ASCII' object has no attribute 'FPGA_ascii_port'
+  --------------------- 
+2024-07-05 16:09:36,417 - __main__ - ERROR - Uncaught exception:
+   File "C:\Users\DLS_Liphy\Desktop\DLS_git\utils\acquisition\interface_thread.py", line 54, in setup
+    self.fpga_serial_ascii=FPGA_interface.FPGA_serial_ASCII()
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DLS_Liphy\Desktop\DLS_git\utils\FPGA_interface.py", line 26, in __init__
+    self.FPGA_ascii = serial.Serial(self.FPGA_ascii_port, baud_rate=self.baudrate,parity=self.parity, bytesize=self.bytesize)
+                                    ^^^^^^^^^^^^^^^^^^^^
+
+AttributeError: 'FPGA_serial_ASCII' object has no attribute 'FPGA_ascii_port'
+  --------------------- 
+2024-07-05 16:10:21,327 - __main__ - ERROR - Uncaught exception:
+   File "C:\Users\DLS_Liphy\Desktop\DLS_git\utils\acquisition\interface_thread.py", line 54, in setup
+    self.fpga_serial_ascii=FPGA_interface.FPGA_serial_ASCII()
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DLS_Liphy\Desktop\DLS_git\utils\FPGA_interface.py", line 26, in __init__
+    self.FPGA_ascii = serial.Serial(self.FPGA_ascii_port, baud_rate=self.baudrate,parity=self.parity, bytesize=self.bytesize)
+                                    ^^^^^^^^^^^^^^^^^^^^
+
+AttributeError: 'FPGA_serial_ASCII' object has no attribute 'FPGA_ascii_port'
+  --------------------- 
+2024-07-05 16:11:21,483 - __main__ - ERROR - Uncaught exception:
+   File "C:\Users\DLS_Liphy\Desktop\DLS_git\utils\acquisition\interface_thread.py", line 54, in setup
+    self.fpga_serial_ascii=FPGA_interface.FPGA_serial_ASCII()
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DLS_Liphy\Desktop\DLS_git\utils\FPGA_interface.py", line 26, in __init__
+    self.FPGA_ascii = serial.Serial(self.FPGA_ascii_port, baud_rate=self.baudrate,parity=self.parity, bytesize=self.bytesize)
+                                    ^^^^^^^^^^^^^^^^^^^^
+
+AttributeError: 'FPGA_serial_ASCII' object has no attribute 'FPGA_ascii_port'
+  --------------------- 
+2024-07-05 16:11:59,861 - __main__ - ERROR - Uncaught exception:
+   File "C:\Users\DLS_Liphy\Desktop\DLS_git\utils\acquisition\interface_thread.py", line 54, in setup
+    self.fpga_serial_ascii=FPGA_interface.FPGA_serial_ASCII()
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DLS_Liphy\Desktop\DLS_git\utils\FPGA_interface.py", line 26, in __init__
+    self.FPGA_ascii = serial.Serial(self.FPGA_ascii_port, baud_rate=self.baudrate,parity=self.parity, bytesize=self.bytesize)
+                                    ^^^^^^^^^^^^^^^^^^^^
+
+AttributeError: 'FPGA_serial_ASCII' object has no attribute 'FPGA_ascii_port'
+  --------------------- 
+2024-07-05 16:12:45,206 - __main__ - ERROR - Uncaught exception:
+   File "C:\Users\DLS_Liphy\Desktop\DLS_git\utils\acquisition\interface_thread.py", line 54, in setup
+    self.fpga_serial_ascii=FPGA_interface.FPGA_serial_ASCII()
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DLS_Liphy\Desktop\DLS_git\utils\FPGA_interface.py", line 26, in __init__
+    self.FPGA_ascii = serial.Serial(self.FPGA_ascii_port, baud_rate=self.baudrate,parity=self.parity, bytesize=self.bytesize)
+                                    ^^^^^^^^^^^^^^^^^^^^
+
+AttributeError: 'FPGA_serial_ASCII' object has no attribute 'FPGA_ascii_port'
+  --------------------- 
+2024-07-05 16:13:14,759 - __main__ - ERROR - Uncaught exception:
+   File "C:\Users\DLS_Liphy\Desktop\DLS_git\utils\acquisition\interface_thread.py", line 54, in setup
+    self.fpga_serial_ascii=FPGA_interface.FPGA_serial_ASCII()
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DLS_Liphy\Desktop\DLS_git\utils\FPGA_interface.py", line 26, in __init__
+    self.FPGA_ascii = serial.Serial(self.FPGA_ascii_port, baud_rate=self.baudrate,parity=self.parity, bytesize=self.bytesize)
+                                    ^^^^^^^^^^^^^^^^^^^^
+
+AttributeError: 'FPGA_serial_ASCII' object has no attribute 'FPGA_ascii_port'
+  --------------------- 
+2024-07-05 16:13:45,159 - __main__ - ERROR - Uncaught exception:
+   File "C:\Users\DLS_Liphy\Desktop\DLS_git\utils\acquisition\interface_thread.py", line 54, in setup
+    self.fpga_serial_ascii=FPGA_interface.FPGA_serial_ASCII()
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DLS_Liphy\Desktop\DLS_git\utils\FPGA_interface.py", line 26, in __init__
+    self.FPGA_ascii = serial.Serial(self.FPGA_ascii_port, baud_rate=self.baudrate,parity=self.parity, bytesize=self.bytesize)
+                                    ^^^^^^^^^^^^^^^^^^^^
+
+AttributeError: 'FPGA_serial_ASCII' object has no attribute 'FPGA_ascii_port'
+  --------------------- 
+2024-07-05 16:14:59,806 - __main__ - ERROR - Uncaught exception:
+   File "C:\Users\DLS_Liphy\Desktop\DLS_git\utils\acquisition\interface_thread.py", line 54, in setup
+    self.fpga_serial_ascii=FPGA_interface.FPGA_serial_ASCII()
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\DLS_Liphy\Desktop\DLS_git\utils\FPGA_interface.py", line 26, in __init__
+    self.FPGA_ascii = serial.Serial(self.FPGA_ascii_port, baud_rate=self.baudrate,parity=self.parity, bytesize=self.bytesize)
+                                    ^^^^^^^^^^^^^^^^^^^^
+
+AttributeError: 'FPGA_serial_ASCII' object has no attribute 'FPGA_ascii_port'
+  --------------------- 
