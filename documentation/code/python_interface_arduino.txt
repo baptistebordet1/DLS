@@ -33,7 +33,7 @@ in the method from viewBox to add the setMouseMode in the list
 and same thing in the PlotWidget list of functions created to propagate the change. 
 
 
-To do things to implement in python code : 
-
-Replace print("connection error") by the the signal to send to the GUI
-Manage the end of the send rotation turntable to use the function to read position
+The two "functions" performing Calibration and Auto find of attenuator position are based on the same principle. 
+First a start signal is emitted from the control class. A first movement is done by the interface thread. At the end of the movement, interface thread send another signal 
+saying the movement is finished, the control class performs a measurement (often by asking photodiode data from interface thread). It then compares the measurement to a threshold 
+and then decide to send a finished signal and continue the code or to start another movement with another movement signal.  

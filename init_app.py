@@ -150,9 +150,7 @@ class Window(container.QWidgetContainer):
     
     # update status and graph on the GUI 
     
-    def update_GUI(self,new_dict_status, new_dict_motors):
-        # Maybe add here the updtae on plots too (if teh new arrays to plot are not too big)
-        
+    def update_GUI(self,new_dict_status, new_dict_motors):        
         self.dict_status=new_dict_status
         self.dict_motors_positions=new_dict_motors
         
@@ -188,13 +186,31 @@ class Window(container.QWidgetContainer):
         self.motor_rotation_control.start_calib.connect(self.connect_signals_start_calib)
         
         #TODO add methods to deal with data 
-        self.worker.new_acquisition_data.connect(self.pass_data)
+        self.worker.new_acquisition_data_auto_corr.connect(self.plot_auto_corr.update_plot)
+        self.worker.new_acquisition_data_cross_corr.connect(self.plot_cross_corr.update_plot)
+        self.worker.new_data_point_photodiode.connect(self.plot_PD.update_plot)
         # Step 6: Start the thread
         self.thread.start()
         
-    def connect_signals_start_calib(self):   
+    # This is a work around to wait for a motor movement without blocking the entire code     
+    def connect_signals_start_calib(self): 
+        self.stop_PD_timer()
         self.motor_rotation_control.calib_window.send_calibration_step.connect(self.worker.send_calibration_turntable)
         self.worker.calibration_step_done.connect(self.motor_rotation_control.calib_window.one_measurement)
+    
+    def connect_signals_start_auto_find_attenuation(self):
+        self.stop_PD_timer()
+        self.motor_attenuation_control.send_command_attenuation_auto_find.connect(self.worker.send_auto_find_attenuator_command)
+        self.worker.auto_find_att_step_done.connect(self.motor_attenuation_control.one_measurement_find_attenuation)
+        self.motor_attenuation_control.auto_find_attenuation_finished.connect(self.start_PD_timer_after_auto_find_att)
+        
+    def start_PD_timer_after_auto_find_att(self):
+        self.worker.PD_timer.start()
+        self.worker.dict_status["current_action"]="None"
+        
+    def stop_PD_timer(self):
+        self.worker.PD_timer.stop()
+
     @pyqtSlot(int,str)
     def catch_motor_error(self,nbr_try,error_code):
         if self.motor_error_box:
@@ -245,11 +261,6 @@ class Window(container.QWidgetContainer):
         super(container.QWidgetContainer, self).closeEvent(*args, **kwargs)
         self.worker.thread_finished.emit() 
         
-   
-    @pyqtSlot(bytes)   
-    def pass_data(self,data):
-        print(data)
-        array=np.frombuffer(data,dtype=np.int8)
 
 # logging file to trace exceptions
 
