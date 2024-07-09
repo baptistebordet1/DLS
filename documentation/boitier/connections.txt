@@ -25,8 +25,10 @@ PIN 11 : Data Positiv absolute encoder PIN 2 of the encoder
 PIN 12 : Data Negativ absolute encoder PIN 3 of the encoder 
 PIN 13 : Sense absolute encoder PIN 6 of the encoder 
 PIN 22 : Reset Pololu driver
+PIN 23 : Measure of the Voltage accross 100KOhms resistor in parallel of the +5V connection (to be verified with bruno if needed)
 +5V with a 390Ohms resistor Phototransitor pin associated with Brown cable on the other end 
 +5V with a 100kOhms into red wire for photontransitor PIN 
+
 
 Sensors Pins : 
 
