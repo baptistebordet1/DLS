@@ -1,0 +1,47 @@
+File Containing all the connections inside the DLS powering box :
+
+First let's consider the connections between the Arduino and the rest of the componnents inside the box
+Format is Arduino Pins : Component pin and then information about the connection 
+
+Interrupt Pins : 
+
+PIN 2 : Pollolu FAULT pin simple cable
+PIN 3 : Pollolu STALL/BEMFV pin simple cable 
+PIN 19 : LeadShine motor driver ALM, don't forget to add a load (see documentation for this)  
+GND : LeadShine motor driver COM- 
+PIN 20 : Limit switch 1 
+PIN 21 : Limit switch 2
++5V : Limit switch 1 and 2 On mounted Pannel 
+
+Motor Pins : 
+PIN 4 : Chip Select Pollolu Driver 
+PIN 5 : Dir Pin Pollolu Driver 
+PIN 6 : Step Pin Pollolu Driver, Needs to be shielded alone  
+PIN 7 : PUL+ Pin LeadSHine Driver, Needs to be shielded alone 
+PIN 8 : DIR + Pin LeadShine Driver
+PIN 9 : Clock Positiv absolute encoder PIN 4 of the encoder (see schematics for more information) 
+Pin 10 : Clock Negativ absolute encoder PIN 5 of the encoder 
+PIN 11 : Data Positiv absolute encoder PIN 2 of the encoder 
+PIN 12 : Data Negativ absolute encoder PIN 3 of the encoder 
+PIN 13 : Sense absolute encoder PIN 6 of the encoder 
+PIN 22 : Reset Pololu driver
++5V with a 390Ohms resistor Phototransitor pin associated with Brown cable on the other end 
++5V with a 100kOhms into red wire for photontransitor PIN 
+
+Sensors Pins : 
+
+PIN 23 : Phototransistor pin look at schematics for more info 
+PIN 24 : Relay SIG Pin 
+
+Then the connections between the components and other devices than Arduino : 
+
++15V and GND to Encoder PIN 7 and 1 
++24V and GND to LeadShine Powering 
++12V and GND to Pololu VIN and GND 
++24V to Normally Open (NO) PIN on relay (and GND)
+
+USb to Arduino 
+4 Wires from Pollolu OUTPUTS (AOUT1, AOUT2, BOUT1, BOUT2) to PIN 1,2,3,4 for Monted Pannel 7 PINS with Phototransistor 
+4 Wires from LeadShine OUTPUTS (A+, A-, B+, B-) to PIN 1,2,3,4 for monted Pannel 4 PIns  
+
+
