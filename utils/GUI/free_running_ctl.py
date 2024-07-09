@@ -16,7 +16,7 @@ class Free_running(container.QGroupBoxContainer):
         super().setup(caption="Free Running")
         self.params=self.add_to_layout(param_table.ParamTable(self))
         self.params.setup(name="free_running_table")
-        self.params.add_combo_box("experience_type",options=["Auto-correlation channel 1","Auto-correlation channel 2", "Auto-correlation channel 1 and 2", "Cross-correlation"],index_values=["AUTO11", "AUTO22", "AUTO12", "CROSS"],label="Experience Type")
+        self.params.add_combo_box("experience_type",options=["Auto-corr chan. 1","Auto-corr chan. 2", "Auto-corr chan. 1 and 2", "Cross-corr"],index_values=["AUTO11", "AUTO22", "AUTO12", "CROSS"],label="Experience Type")
         self.params.add_toggle_button("free_running", label="Free Running", caption=["Free Running off", "Free Running on"])
         self.params.w["free_running"].clicked.connect(self.start_stop_free_running)
         

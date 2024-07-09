@@ -64,26 +64,26 @@ class Window(container.QWidgetContainer):
         
         with self.using_new_sublayout("statuss","vbox"):
             self.status_tab=self.add_child("status",container.QFrameContainer())
-            self.status_tab.setMaximumWidth(int(0.15*self.screen_w))
+            self.status_tab.setMaximumWidth(int(0.19*self.screen_w))
             self.status_tab.setMaximumHeight(int(0.5*self.screen_h))
             self.status_tab.setup()
             self.status_control=self.status_tab.add_to_layout(status_ctl.Status(self))
             self.status_control.setup(self.dict_status)
             
             self.plot_control_auto_corr_tab=self.add_child("control_auto_corr", container.QFrameContainer())
-            self.plot_control_auto_corr_tab.setMaximumWidth(int(0.15*self.screen_w))
+            self.plot_control_auto_corr_tab.setMaximumWidth(int(0.19*self.screen_w))
             self.plot_control_auto_corr_tab.setup()
             self.plot_control_auto_corr=self.plot_control_auto_corr_tab.add_to_layout(plots_ctl.plot_control_auto_corr(self))
             self.plot_control_auto_corr.setup(self.plot_auto_corr.auto_corr)
             
             self.plot_control_I_avg_tab=self.add_child("control_I_avg", container.QFrameContainer())
-            self.plot_control_I_avg_tab.setMaximumWidth(int(0.15*self.screen_w))
+            self.plot_control_I_avg_tab.setMaximumWidth(int(0.19*self.screen_w))
             self.plot_control_I_avg_tab.setup()
             self.plot_control_I_avg=self.plot_control_I_avg_tab.add_to_layout(plots_ctl.plot_control_I_avg(self))
             self.plot_control_I_avg.setup(self.plot_PD.PD)
             
             self.plot_control_cross_corr_tab=self.add_child("control_cross_corr", container.QFrameContainer())
-            self.plot_control_cross_corr_tab.setMaximumWidth(int(0.15*self.screen_w))
+            self.plot_control_cross_corr_tab.setMaximumWidth(int(0.19*self.screen_w))
             self.plot_control_cross_corr_tab.setup()
             self.plot_control_cross_corr=self.plot_control_cross_corr_tab.add_to_layout(plots_ctl.plot_control_cross_corr(self))
             self.plot_control_cross_corr.setup(self.plot_cross_corr.cross_corr)
@@ -95,8 +95,8 @@ class Window(container.QWidgetContainer):
             
             # Motor control tabs
             self.motor_tabs=self.add_child("motor_control", container.QTabContainer(self))
-            self.motor_tabs.setMaximumWidth(int(0.15*self.screen_w))
-            self.motor_tabs.setMaximumHeight(int(0.15*self.screen_h))
+            self.motor_tabs.setMaximumWidth(int(0.2*self.screen_w))
+            self.motor_tabs.setMaximumHeight(int(0.17*self.screen_h))
             self.motor_rotation_tab=self.motor_tabs.add_tab("Motor rotation tab", "Rotation")
             self.motor_attenuation_tab=self.motor_tabs.add_tab("Motor attenuation tab", "Attenuation")
             self.motor_rotation_control=self.motor_rotation_tab.add_child("motor rotation", motor_ctl.Motor_rotation(self.motor_tabs))
@@ -108,32 +108,32 @@ class Window(container.QWidgetContainer):
             #Free running tab 
             self.free_running_tab=self.add_to_layout(container.QFrameContainer(self),location=(2))
             self.free_running_tab.setup()
-            self.free_running_tab.setMaximumWidth(int(0.15*self.screen_w))
-            self.free_running_tab.setMaximumHeight(int(0.15*self.screen_h))
+            self.free_running_tab.setMaximumWidth(int(0.2*self.screen_w))
+            self.free_running_tab.setMaximumHeight(int(0.17*self.screen_h))
             self.free_running_control=self.free_running_tab.add_to_layout(free_running_ctl.Free_running(self))
             self.free_running_control.setup()
             
             # Saving tab
             self.saving_tab=self.add_to_layout(container.QFrameContainer(self),location=(5))
             self.saving_tab.setup()
-            self.saving_tab.setMaximumWidth(int(0.15*self.screen_w))
-            self.saving_tab.setMaximumHeight(int(0.15*self.screen_h))
+            self.saving_tab.setMaximumWidth(int(0.2*self.screen_w))
+            self.saving_tab.setMaximumHeight(int(0.17*self.screen_h))
             self.saving_control=self.saving_tab.add_to_layout(saving_ctl.Saving(self))
             self.saving_control.setup()
             
             # Acquistion tab
             self.acquisition_tab=self.add_to_layout(container.QFrameContainer(self),location=(3))
             self.acquisition_tab.setup()
-            self.acquisition_tab.setMaximumWidth(int(0.15*self.screen_w))
-            self.acquisition_tab.setMaximumHeight(int(0.15*self.screen_h))
+            self.acquisition_tab.setMaximumWidth(int(0.2*self.screen_w))
+            self.acquisition_tab.setMaximumHeight(int(0.19*self.screen_h))
             self.acquisition_control=self.acquisition_tab.add_to_layout(acquisition_ctl.Acquisition(self))
             self.acquisition_control.setup(self.saving_control)
                        
             # Sequence tab
             self.sequence_tab=self.add_to_layout(container.QFrameContainer(self),location=(4))
             self.sequence_tab.setup()
-            self.sequence_tab.setMaximumWidth(int(0.15*self.screen_w))
-            self.sequence_tab.setMaximumHeight(int(0.15*self.screen_h))
+            self.sequence_tab.setMaximumWidth(int(0.2*self.screen_w))
+            self.sequence_tab.setMaximumHeight(int(0.17*self.screen_h))
             self.sequence_control=self.sequence_tab.add_to_layout(sequence_ctl.Sequence(self))
             self.sequence_control.setup(self.saving_control)            
             
