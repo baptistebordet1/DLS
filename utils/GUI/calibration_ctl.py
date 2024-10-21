@@ -9,7 +9,7 @@ import pyqtgraph
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtCore import pyqtSignal, pyqtSlot
 from pylablib.core.gui.widgets import param_table, container
-from test_DLS.picosdk_python_wrappers_master.ps3000aExamples import ps3000aBlockExample # change here 
+#from test_DLS.picosdk_python_wrappers_master.ps3000aExamples import ps3000aBlockExample # change here 
 from utils import constants
 
 import numpy as np
@@ -50,7 +50,7 @@ class Calibration(container.QFrameContainer):
         
     @pyqtSlot()    
     def one_measurement(self,motor_pos):
-        calib_measure=ps3000aBlockExample.pico_block_aquisition() # TODO add here the measurements from FPGA photodiode when available 
+        #calib_measure=ps3000aBlockExample.pico_block_aquisition() # TODO add here the measurements from FPGA photodiode when available 
         self.motor_positions.append(motor_pos)
         self.calib_data.append(calib_measure.acquire())
         self.i=self.i+1
