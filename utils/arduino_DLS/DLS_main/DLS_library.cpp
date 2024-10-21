@@ -32,6 +32,8 @@ void DLS_library::begin() {
   digitalWrite(_clock_positiv, HIGH);
   digitalWrite(_clock_negativ, LOW);
 
+/*
+
   // initiate SPI connection for polllolu driver
   HighPowerStepperDriver _sd;
   SPI.begin();
@@ -64,6 +66,9 @@ void DLS_library::begin() {
 
   // Enable the motor outputs.
   _sd.enableDriver();
+
+*/
+
 }
 // Generic functions for motor
 void DLS_library::setDirection(int _Direction_Pin, bool _dir) {

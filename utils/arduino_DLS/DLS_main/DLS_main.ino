@@ -155,17 +155,22 @@ void loop() {
           position_motor_rotation = DLS_library.read_encoder();
           Serial.write(char(position_motor_rotation));
           Serial.write("\n");
+          break;
         } else if (motor_select == 'A') {
           Serial.write(position_motor_attenuator);
           Serial.write("\n");
+          break;
         }
+        break;
       case 'C':  // ping from python code at the beginning to see if arduino is connected
         Serial.write("ALIVE");
+        break;
       case 'I':
         is_signal_phototransistor = DLS_library.initialisation_position_attenuator();  //
         if (is_signal_phototransistor == 0) {
           Serial.write("Error_init_attenuator\n");
         }
+        break;
       case 'E':  // calibration move
         rotation_number_before_measure_position = Serial.parseInt();
         DLS_library.move_trig_positiv_rotation_platine(rotation_number_before_measure_position, dl);
@@ -177,6 +182,7 @@ void loop() {
         Serial.write("calibration_motor_rotating,");
         Serial.write(char(position_motor_rotation));
         Serial.write("\n");
+        break;
     }
     position_motor_rotation = DLS_library.read_encoder();
 
