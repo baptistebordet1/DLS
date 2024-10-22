@@ -212,7 +212,7 @@ class Window(container.QWidgetContainer):
 
     @pyqtSlot(int,str)
     def catch_motor_error(self,nbr_try,error_code):
-        if self.motor_error_box:
+        if hasattr(self, 'motor_error_box'):
             self.motor_error_box.close()
         self.motor_error_box=QtWidgets.QMessageBox()
         self.motor_error_box.setWindowFlags(Qt.WindowStaysOnTopHint)

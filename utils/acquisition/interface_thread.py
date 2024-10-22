@@ -39,11 +39,11 @@ class Worker(QObject):
         self.tried_restart_attenuator=0
         self.tried_restart_rotation=0
         #TODO uncomment this part when arduino is connected 
-        #self.arduino_comm=arduino_interface.Arduino_communication()
+        self.arduino_comm=arduino_interface.Arduino_communication()
         self.read_arduino_timer=QTimer(self)
         self.read_arduino_timer.setInterval(100)
         self.read_arduino_timer.timeout.connect(self.read_arduino)
-        #self.read_arduino_timer.start()
+        self.read_arduino_timer.start()
         self.previous_command_arduino=""
         self.PD_timer=QTimer(self)
         self.PD_timer.setInterval(1000)
@@ -58,29 +58,29 @@ class Worker(QObject):
         # TODO verify that photodiode_val is of type int 
             
     def read_arduino(self):
-        while self.arduino_comm.arduino.in_waiting()>0:
+        while self.arduino_comm.arduino.in_waiting>0:
             self.received_message=self.arduino_comm.arduino.read_until()
-            if "CRITICAL_ERROR" in self.received_message:
+            if b"CRITICAL_ERROR" in self.received_message:
                 self.critical_error.emit(-1000,"2")
-            elif self.received_message == "Error_init_attenuator\n":
+            elif self.received_message == b"Error_init_attenuator\n":
                 self.fail_init_attenuator.emit(2,"-5")
-            elif self.received_message == "error_rotation_motor\n":
+            elif self.received_message == b"error_rotation_motor\n":
                 self.error_rotation_motor.emit(self.tried_restart_rotation,"0")
                 self.tried_restart_rotation=self.tried_restart_rotation+1
-            elif self.received_message=="error_attenuation_motor\n":
+            elif self.received_message==b"error_attenuation_motor\n":
                 self.error_attenuation_motor.emit(self.tried_restart_attenuator,"1")
                 self.tried_restart_attenuator=self.tried_restart_attenuator+1
-            elif "motor_rotating" in self.received_message:
+            elif b"motor_rotating" in self.received_message:
                 position_motor=self.arduino_comm.converter_angle_rotation_turntable_dec_to_deg(self, float(self.received_message[14:-2]))
                 self.dict_motors_positions["Rotation motor pos"]=position_motor
-            elif "movement_finished" in self.received_message:
+            elif b"movement_finished" in self.received_message:
                 position_motor=self.arduino_comm.converter_angle_rotation_turntable_dec_to_deg(self, float(self.received_message[17:-2]))
                 self.dict_motors_positions["Rotation motor pos"]=position_motor
                 self.dict_status["current_action"]="None"
-            elif "calibration_movement_finished" in self.received_message:
+            elif b"calibration_movement_finished" in self.received_message:
                 self.position_calibration=self.received_message[29:-2]
                 self.calibration_step_done.emit()
-            elif "movement_attenuation_finished" in self.received_message:
+            elif b"movement_attenuation_finished" in self.received_message:
                 if self.auto_find==1:
                     self.auto_find_att_step_done.emit(self)
                 #TODO check the value of attenuator position maybe convert it via dict in constants 
