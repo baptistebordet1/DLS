@@ -27,7 +27,6 @@ from pylablib.core.gui.widgets import container
 import sys
 import traceback
 import logging
-import numpy as np 
 import serial
 
 
@@ -44,7 +43,6 @@ class Window(container.QWidgetContainer):
                           "laser_status":"Off","arduino_connected":"Not connected",
                           "acquisition_progress":"No acquisition","error":"None"}
         self.dict_motors_positions={"Rotation motor pos":0,"Attenuation motor pos":0}
-        self.dict_acquisition={"corr_length":1000, "acq_time":30}
         self._config=constants.default_configuration(self)
         self.config_dict=self._config.config_dict
         
@@ -68,7 +66,7 @@ class Window(container.QWidgetContainer):
             self.status_tab.setMaximumHeight(int(0.5*self.screen_h))
             self.status_tab.setup()
             self.status_control=self.status_tab.add_to_layout(status_ctl.Status(self))
-            self.status_control.setup(self.dict_status)
+            self.status_control.setup(self.dict_status) 
             
             self.plot_control_auto_corr_tab=self.add_child("control_auto_corr", container.QFrameContainer())
             self.plot_control_auto_corr_tab.setMaximumWidth(int(0.19*self.screen_w))
@@ -111,7 +109,7 @@ class Window(container.QWidgetContainer):
             self.free_running_tab.setMaximumWidth(int(0.2*self.screen_w))
             self.free_running_tab.setMaximumHeight(int(0.17*self.screen_h))
             self.free_running_control=self.free_running_tab.add_to_layout(free_running_ctl.Free_running(self))
-            self.free_running_control.setup()
+            # free running is not setup here because it needs the acquisition control widget 
             
             # Saving tab
             self.saving_tab=self.add_to_layout(container.QFrameContainer(self),location=(5))
@@ -128,6 +126,8 @@ class Window(container.QWidgetContainer):
             self.acquisition_tab.setMaximumHeight(int(0.19*self.screen_h))
             self.acquisition_control=self.acquisition_tab.add_to_layout(acquisition_ctl.Acquisition(self))
             self.acquisition_control.setup(self.saving_control)
+            self.free_running_control.setup(self.acquisition_control) # see above for the reason 
+            
                        
             # Sequence tab
             self.sequence_tab=self.add_to_layout(container.QFrameContainer(self),location=(4))
@@ -181,11 +181,10 @@ class Window(container.QWidgetContainer):
         self.free_running_control.free_running_start.connect(self.worker.prepare_free_running)
         self.free_running_control.free_runing_stop.connect(self.worker.stop_acquisition)
         self.acquisition_control.Acquisition_start.connect(self.worker.prepare_acquisition)
+        self.acquisition_control.Acquisition_stop.connect(self.worker.stop_acquisition)
         self.motor_rotation_control.send_command_rotation.connect(self.worker.send_rotation_command)
         self.motor_attenuation_control.send_command_attenation.connect(self.worker.send_attenuator_command)
         self.motor_rotation_control.start_calib.connect(self.connect_signals_start_calib)
-        
-        #TODO add methods to deal with data 
         self.worker.new_acquisition_data_auto_corr.connect(self.plot_auto_corr.update_plot)
         self.worker.new_acquisition_data_cross_corr.connect(self.plot_cross_corr.update_plot)
         self.worker.new_data_point_photodiode.connect(self.plot_PD.update_plot)
@@ -213,7 +212,7 @@ class Window(container.QWidgetContainer):
 
     @pyqtSlot(int,str)
     def catch_motor_error(self,nbr_try,error_code):
-        if self.motor_error_box:
+        if hasattr(self, 'motor_error_box'):
             self.motor_error_box.close()
         self.motor_error_box=QtWidgets.QMessageBox()
         self.motor_error_box.setWindowFlags(Qt.WindowStaysOnTopHint)

@@ -46,7 +46,8 @@ class Arduino_communication():
         string_to_send=b"C"
         self.arduino.write(string_to_send)
         is_connected=self.arduino.read(5)
-        if is_connected !="ALIVE":
+        print(is_connected)
+        if is_connected !=b"ALIVE":
             raise serial.SerialTimeoutException("Arduino")
         self.arduino.write(b"I")
     

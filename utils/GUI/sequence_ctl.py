@@ -77,7 +77,7 @@ class Sequence(container.QGroupBoxContainer):
             line = re.sub(r"[\n\t\s]*", "", line)
             line_splitted = line.split(",")
             
-            if line_splitted[0] == "MOVE" and len(line_splitted) != 1:
+            if line_splitted[0] == "MOVE" and len(line_splitted) != 2:
                 QMessageBox.warning(
                     self, "Measurement file error", "Invalid number of argument for MOVE argument")
                 return

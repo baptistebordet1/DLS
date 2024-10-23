@@ -16,8 +16,6 @@ from PyQt5.QtCore import pyqtSignal
 from utils.constants import Acquisition_time_limit
 from utils.GUI import saving_ctl
 
-#TODO add stop methods 
-
 class Acquisition(container.QGroupBoxContainer):
     Acquisition_start=pyqtSignal(str, str, str, str,str,  int, int)
     Acquisition_stop=pyqtSignal()
@@ -59,3 +57,9 @@ class Acquisition(container.QGroupBoxContainer):
                                           "Saving Folder doesn't exist", "The saving folder you indicated is unreachable, try browsing instead") 
             return
         self.Acquisition_start.emit(folder_path, filename,extension_file,separator,self.params.v["experience_type"],self.params.v["corr_length"],self.params.v["acq_time"])
+    
+    def stop_acquisition(self):
+        self.Acquisition_stop.emit()
+    
+    def grab_tau_max(self):
+        return self.params.v["corr_length"]

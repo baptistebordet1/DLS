@@ -184,9 +184,6 @@ void loop() {
         Serial.write("\n");
         break;
     }
-    position_motor_rotation = DLS_library.read_encoder();
-
-    Serial.write("calibration_movement_finished,");
   }
   if (DLS_library.emergency_stop_R == 1) {
   Serial.write("CRITICAL_ERROR\n");

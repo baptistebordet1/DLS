@@ -18,14 +18,23 @@ class Arduino_interface():
     PHOTODIODE_ATTENUATOR_THRESHOLD=45 # threshold for the photiode for autofind of attenuation 
     
 class Acquisition_time_limit():
-    TAU_MIN=0 # ms
+    
+    TAU_MIN=40*10**(-6) # ms
     TAU_MAX=1000 # ms
     ACQ_TIME_MIN=1 #s 
     ACQ_TIME_MAX=100 #s
     
+    def set_points_number_plot(self,tau_max):
+        import numpy as np 
+        self.MAX_POINT_PLOT= np.log2(tau_max/self.TAU_MIN)*4
+        
+    
 class Acquisition_parameters():
     LENGTH_TYPE_EQ={"AUTO11":160, "AUTO22":160, "AUTO12":320, "CROSS":320} #TODO modify accordingly the message lengths 
-
+    FIRST_CORRELATOR_LENGTH=16
+    TOTAL_NUMBER_CORRELATOR=192 # 24*8 this doesn't count the duplicated values and treat the first correlator as 2 correlators (each having 8 values) 
+    DIFFERENT_CORRELATORS_NUMBER=23 # this count the first correlator as one correlator 
+    LINEAR_CORRELATION_NUMBER=8
 class plots_parameters():
     MAXIMUM_POINTS_PHOTODIODE=300 # 5 min at 1 point/s 
     

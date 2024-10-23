@@ -8,11 +8,13 @@ Created on Monday June 24 2024
 
 from pylablib.core.gui.widgets import container, param_table
 from PyQt5.QtCore import pyqtSignal
+from utils.GUI import acquisition_ctl
 
 class Free_running(container.QGroupBoxContainer):
-    free_running_start=pyqtSignal(str)
+    free_running_start=pyqtSignal(str,int)
     free_runing_stop=pyqtSignal()
-    def setup(self):
+    def setup(self,acquisition_ctl):
+        self.acquisition_ctl=acquisition_ctl
         super().setup(caption="Free Running")
         self.params=self.add_to_layout(param_table.ParamTable(self))
         self.params.setup(name="free_running_table")
@@ -22,7 +24,7 @@ class Free_running(container.QGroupBoxContainer):
         
     def start_stop_free_running(self):
         if self.params.v["free_running"]==True:
-            self.free_running_start.emit(self.params.v["experience_type"])
+            self.free_running_start.emit(self.params.v["experience_type"],acquisition_ctl.Acquisition.grab_tau_max(self.acquisition_ctl))
         if self.params.v["free_running"]==False:
             self.free_running_stop.emit()
             

@@ -21,15 +21,23 @@ class plot_auto_correlation(container.QFrameContainer):
         self.auto_corr.setLabel("left","Auto Correlation")
         self.auto_corr.setMouseMode(pyqtgraph.ViewBox.RectMode)
         self.plot1=self.auto_corr.plot(array["x"],array["y"],name="auto_corr1",symbol="x", pen=None)
-        self.tau_list=[]
-        
+        self.tau_list_0th_corr=np.arange(constants.Acquisition_time_limit.TAU_MIN, (constants.Acquisition_parameters.FIRST_CORRELATOR_LENGTH+1)*constants.Acquisition_time_limit.TAU_MIN, constants.Acquisition_time_limit.TAU_MIN)
+        self.tau_list=np.zeros((constants.Acquisition_parameters.TOTAL_NUMBER_CORRELATOR))
+        self.tau_list[0:constants.Acquisition_parameters.FIRST_CORRELATOR_LENGTH]=self.tau_list_0th_corr
+        k=constants.Acquisition_parameters.FIRST_CORRELATOR_LENGTH
+        for i in range(1,constants.Acquisition_parameters.DIFFERENT_CORRELATORS_NUMBER):
+            for j in range(1,constants.Acquisition_parameters.LINEAR_CORRELATION_NUMBER+1):
+                self.tau_list[k]=(self.tau_list_0th_corr[0]*2**i*j)
+                k=k+1
+                
+        #TODO check that it's teh full tau list needed or the list without duplicated values 
     def update_plot(self,new_data_point,exp_type):
-        # TDOD add a way to deal with tau max variable 
+        n_max=constants.Acquisition_time_limit.MAX_POINT_PLOT
         if exp_type =="AUTO11" or exp_type=="AUTO22":
-            self.auto_corr.plot(self.tau_list,new_data_point, symbol="x", name=exp_type, pen=None)
+            self.auto_corr.plot(self.tau_list[0:n_max],new_data_point[n_max], symbol="x", name=exp_type, pen=None)
         else: 
-            self.auto_corr.plot(self.tau_list[0:int(len(new_data_point)/2)],new_data_point[0:int(len(new_data_point)/2)],name="AUTO11", symbol="x", pen=None)
-            self.auto_corr.plot(self.tau_list[int(len(new_data_point)/2):],new_data_point[int(len(new_data_point)/2):],name="AUTO22", symbol="t",pen=None)
+            self.auto_corr.plot(self.tau_list[0:n_max],new_data_point[0:n_max],name="AUTO11", symbol="x", pen=None)
+            self.auto_corr.plot(self.tau_list[int(len(new_data_point)/2):n_max+int(len(new_data_point)/2)],new_data_point[int(len(new_data_point)/2):int(len(new_data_point)/2)+n_max],name="AUTO22", symbol="t",pen=None)
             
         
         
@@ -43,9 +51,9 @@ class plot_cross_correlation(container.QFrameContainer):
         self.cross_corr.getPlotItem().setLogMode(True)
         self.cross_corr.setLabel("left","Cross Correlation")  
         self.tau_list=[]
-        #TODO add a method to deal with variable tau points 
     def update_plot(self,new_data_point,exp_type):
-        self.cross_corr.plot(self.tau_list, new_data_point, name="Cross Correlation ", symbol="+", pen=None)
+        n_max=constants.Acquisition_time_limit.MAX_POINT_PLOT
+        self.cross_corr.plot(self.tau_list[0:n_max], new_data_point[0:n_max], name="Cross Correlation ", symbol="+", pen=None)
         
 class plot_PD(container.QFrameContainer):
     def setup(self):

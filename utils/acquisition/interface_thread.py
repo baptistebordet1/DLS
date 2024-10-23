@@ -5,7 +5,6 @@ Created on Wednesday May 29 2024
 @author: Baptiste Bordet
 """
 
-#TODO add here modification of the dictionnaries at different actions
 from PyQt5.QtCore import QProcess, QProcessEnvironment, QObject, pyqtSignal, QTimer, pyqtSlot
 from utils import arduino_interface, FPGA_interface, constants
 from pathlib import Path 
@@ -15,7 +14,6 @@ import numpy as np
  
 class Worker(QObject):
     
-    #TODO modify the update command according to the data needed for transfer
     update_gui_data=pyqtSignal(dict, dict )
     thread_finished=pyqtSignal()
     new_acquisition_data_auto_corr=pyqtSignal(bytes,int)
@@ -34,7 +32,6 @@ class Worker(QObject):
                           "laser_status":"Off","arduino_connected":"Not connected",
                           "acquisition_progress":"No acquisition","error":"None"}
         self.dict_motors_positions={"Rotation motor pos":150,"Attenuation motor pos":0}
-        self.dict_acquisition={"corr_length":1000, "acq_time":30}
         self.update_timer=QTimer(self)
         self.update_timer.setInterval(100)
         self.update_timer.timeout.connect(self.send_update_gui_command)
@@ -42,11 +39,11 @@ class Worker(QObject):
         self.tried_restart_attenuator=0
         self.tried_restart_rotation=0
         #TODO uncomment this part when arduino is connected 
-        #self.arduino_comm=arduino_interface.Arduino_communication()
+        self.arduino_comm=arduino_interface.Arduino_communication()
         self.read_arduino_timer=QTimer(self)
         self.read_arduino_timer.setInterval(100)
         self.read_arduino_timer.timeout.connect(self.read_arduino)
-        #self.read_arduino_timer.start()
+        self.read_arduino_timer.start()
         self.previous_command_arduino=""
         self.PD_timer=QTimer(self)
         self.PD_timer.setInterval(1000)
@@ -61,29 +58,29 @@ class Worker(QObject):
         # TODO verify that photodiode_val is of type int 
             
     def read_arduino(self):
-        while self.arduino_comm.arduino.in_waiting()>0:
+        while self.arduino_comm.arduino.in_waiting>0:
             self.received_message=self.arduino_comm.arduino.read_until()
-            if "CRITICAL_ERROR" in self.received_message:
+            if b"CRITICAL_ERROR" in self.received_message:
                 self.critical_error.emit(-1000,"2")
-            elif self.received_message == "Error_init_attenuator\n":
+            elif self.received_message == b"Error_init_attenuator\n":
                 self.fail_init_attenuator.emit(2,"-5")
-            elif self.received_message == "error_rotation_motor\n":
+            elif self.received_message == b"error_rotation_motor\n":
                 self.error_rotation_motor.emit(self.tried_restart_rotation,"0")
                 self.tried_restart_rotation=self.tried_restart_rotation+1
-            elif self.received_message=="error_attenuation_motor\n":
+            elif self.received_message==b"error_attenuation_motor\n":
                 self.error_attenuation_motor.emit(self.tried_restart_attenuator,"1")
                 self.tried_restart_attenuator=self.tried_restart_attenuator+1
-            elif "motor_rotating" in self.received_message:
+            elif b"motor_rotating" in self.received_message:
                 position_motor=self.arduino_comm.converter_angle_rotation_turntable_dec_to_deg(self, float(self.received_message[14:-2]))
                 self.dict_motors_positions["Rotation motor pos"]=position_motor
-            elif "movement_finished" in self.received_message:
+            elif b"movement_finished" in self.received_message:
                 position_motor=self.arduino_comm.converter_angle_rotation_turntable_dec_to_deg(self, float(self.received_message[17:-2]))
                 self.dict_motors_positions["Rotation motor pos"]=position_motor
                 self.dict_status["current_action"]="None"
-            elif "calibration_movement_finished" in self.received_message:
+            elif b"calibration_movement_finished" in self.received_message:
                 self.position_calibration=self.received_message[29:-2]
                 self.calibration_step_done.emit()
-            elif "movement_attenuation_finished" in self.received_message:
+            elif b"movement_attenuation_finished" in self.received_message:
                 if self.auto_find==1:
                     self.auto_find_att_step_done.emit(self)
                 #TODO check the value of attenuator position maybe convert it via dict in constants 
@@ -104,6 +101,7 @@ class Worker(QObject):
             direction_rotation="N"
         self.arduino_comm.send_rotation_turntable(position_goal, direction_rotation)
         self.previous_command_arduino="ROTATION,"+str(position_goal)
+        self.dict_status["current_action"]="Rotation turntable"
         
     @pyqtSlot()
     def send_calibration_turntable(self):
@@ -113,12 +111,14 @@ class Worker(QObject):
     def send_auto_find_attenuator_command(self,position_goal):
         self.arduino_comm.send_rotation_attenuator(position_goal)
         self.auto_find=1
+        self.dict_status["current_action"]="Search attenuator best position"
         
     @pyqtSlot(int) 
     def send_attenuator_command(self,position_goal):
         self.arduino_comm.send_rotation_attenuator(position_goal)
         self.previous_command_arduino="ATTENUATOR"+str(position_goal)
         self.auto_find=0
+        self.dict_status["current_action"]="Move attenuator"
          
     @pyqtSlot(str, str, str, str, str, int, int)
     def prepare_acquisition(self,folder_path, filename, extenstion_file, separator, exp_type,  tau_max, acquisition_time):
@@ -128,7 +128,6 @@ class Worker(QObject):
    
     @pyqtSlot(str,int)
     def start_acquisition(self,exp_type,acq_time):
-        
         self.acquisition_timer=QTimer()
         self.acquisition_timer.setSingleShot(True)
         self.acquisition_timer.setInterval(acq_time)
@@ -139,10 +138,10 @@ class Worker(QObject):
         self.acquisition_timer.start()
         self.dict_status["current_action"]="Acquisition"
     
-    @pyqtSlot(str)
-    def prepare_free_running(self, exp_type):
+    @pyqtSlot(str,int)
+    def prepare_free_running(self, exp_type, tau_max):
         self.sub_process_acquisition=free_running_Acquisition()
-        self.sub_process_acquisition.setup(self,exp_type)
+        self.sub_process_acquisition.setup(self,exp_type,tau_max)
         
     @pyqtSlot(str)
     def start_free_running(self,exp_type):
@@ -157,6 +156,7 @@ class Worker(QObject):
         self.fpga_serial_ascii.stop_acq()
         self.PD_timer.start()
         self.kill_process.emit()
+        self.dict_status["current_action"]="None"
         
 class process_Acquisition(QObject):
     ready_for_acquisition=pyqtSignal(str,int)
@@ -169,6 +169,7 @@ class process_Acquisition(QObject):
        self.separator=separator
        self.exp_type=exp_type
        self.tau_max=tau_max
+       constants.Acquisition_time_limit.set_points_number_plot(constants.Acquisition_time_limit, self.tau_max)
        self.acquisition_time=acquisition_time
        self.message_length=constants.Acquisition_parameters.LENGTH_TYPE_EQ[self.exp_type]
        self.env=QProcessEnvironment.systemEnvironment()
@@ -220,10 +221,12 @@ class process_Acquisition(QObject):
 
 class free_running_Acquisition(QObject):
     ready_for_acquisition=pyqtSignal(str)
-    def setup(self,worker, exp_type):
+    def setup(self,worker, exp_type,tau_max):
        self.worker=worker
        self.exp_type=exp_type
+       self.tau_max=tau_max
        self.message_length=constants.Acquisition_parameters.LENGTH_TYPE_EQ[self.exp_type]
+       constants.Acquisition_time_limit.set_points_number_plot(constants.Acquisition_time_limit, self.tau_max)
        self.env=QProcessEnvironment.systemEnvironment()
        self.p = QProcess()
        self.p.setProcessEnvironment(self.env)
