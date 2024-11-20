@@ -1,5 +1,5 @@
 #include "DLS_library.h"
-DLS_library DLS_library(9,10,11,12,13, 4, 5, 6, 7,8,23);
+DLS_library DLS_library(9,10,11,12,13, 53, 7,8,23);
 
 int dl = 20;                       //  time between each motor step for the turntable (ms)
 int delay_attenuation_motor = 20;  //  time between each motor step for the attenuator (ms)
@@ -13,9 +13,9 @@ int steps_to_do;                   // Variable containing the number of steps to
 int step_to_reach;                 // Variable containing the position to reach for the attenuator motor
 int condition = 0;
 int rotation_number_before_measure_position;  // Variable containing the steps between position measurements for platine rotation
-int relay_R_pin = 24;                              // Pin for relay for rotation motor, fault restart and stop the power of motor in case of limit switches reached
+int relay_R_pin = 24;                         // Pin for relay for rotation motor, fault restart and stop the power of motor in case of limit switches reached
 int state_relay_R = 0;                        // state of the relay 0: closed (motor powered), 1: open (motor stopped)
-int reset_attenuator_control_pin= 22;             // Pin to try to reset the attenuator control
+int reset_attenuator_control_pin= 22;         // Pin to try to reset the attenuator control
 int fault_attenuator_control_pin = 2;         // Pin receive LOW when driver detects fault in motor (over temperature,over voltage over current  )
 int stall_attenuator_pin = 3;                 // Pin receives low when drivers detect a stall in the attenuator motor (attempt to reset the chip and restart procedure)
 int fault_detection_rotation_motor_pin = 19;  // Pin to read if a fault is detected in the motor attenuation
@@ -38,8 +38,8 @@ void setup() {
   pinMode(fault_attenuator_control_pin, INPUT);
   pinMode(stall_attenuator_pin, INPUT);
   pinMode(fault_detection_rotation_motor_pin, INPUT);
-  attachInterrupt(digitalPinToInterrupt(fault_attenuator_control_pin), fault_stop_attenuation, FALLING);
-  attachInterrupt(digitalPinToInterrupt(stall_attenuator_pin), fault_stop_attenuation, FALLING);
+  attachInterrupt(digitalPinToInterrupt(fault_attenuator_control_pin), fault_stop_attenuation, RISING);
+  attachInterrupt(digitalPinToInterrupt(stall_attenuator_pin), fault_stop_attenuation, RISING);
   attachInterrupt(digitalPinToInterrupt(fault_detection_rotation_motor_pin), fault_stop_rotation, RISING);
   attachInterrupt(digitalPinToInterrupt(limit_switch_1_pin),emergency_stop_rotation, RISING);
   attachInterrupt(digitalPinToInterrupt(limit_switch_2_pin),emergency_stop_rotation, RISING);

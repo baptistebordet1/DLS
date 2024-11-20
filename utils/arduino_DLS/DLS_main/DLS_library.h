@@ -5,13 +5,14 @@ Created by Baptiste Bordet, April 3 2024.
 */
 
 #include "Arduino.h"
+#include <HighPowerStepperDriver.h>
 #ifndef Morse_h
 #define Morse_h
 
 class DLS_library {
 public:
 
-  DLS_library(int clock_positiv, int clock_negativ, int data_positiv, int data_negativ, int sense, int CSPinA, int DirPinA, int StepPinA, int StepPinR, int DirPinR,int phototransistor_pin);
+  DLS_library(int clock_positiv, int clock_negativ, int data_positiv, int data_negativ, int sense, int CSPinA, int StepPinR, int DirPinR,int phototransistor_pin);
   void begin();
   void move_trig_positiv_rotation_platine(int _rotation_number_before_measure_position, int _dl);
   void move_trig_negativ_rotation_platine(int _rotation_number_before_measure_position, int _dl);
@@ -27,15 +28,15 @@ public:
 
 
 private:
-  void setDirection(int, bool);
-  void step(int );
+  void setDirection_R(int _Direction_Pin, bool _dir);
+  void setDirection_A(HighPowerStepperDriver &_sd, int _dir);
+  void step_R(int _StepPin_R);
+  void step_A(HighPowerStepperDriver &_sd);
   int _phototransistor_pin; // rphotostranstor pin reading value 
   int _DirPin_R;   // Direction pin for rotation control motor
   int _StepPin_R;  // Pin to send pulse to do a step for rotation control motor
-  int _DirPin_A;   // direction pin for attenuator motor control
-  int _StepPin_A;  // Pin to send pulse to do a step for attenuator motor control (or micro-step depending the controller mode is set)
   int _CSPin_A;    // Chip select pin for SPI connection (Attenuator driver)
-  int _sd;         // SPI class
+  HighPowerStepperDriver _sd;         // SPI class
   int _rotation_number_before_measure_position;
   int _position_attenuator_motor; // Very import stores value of the position motor take care when changing this value
   int _dl;                       // delay motor rotation
