@@ -18,29 +18,29 @@ public:
   void move_trig_negativ_rotation_platine(int _rotation_number_before_measure_position, int _dl);
   char flip(char _c);
   int graytoInt(String _gray);
-  void move_trig_positiv_attenuator(int _steps_number, int _delay_attenuation_motor);
-  void move_trig_negativ_attenuator(int _steps_number, int _delay_attenuation_motor);
+  void move_trig_positiv_attenuator(int _steps_number);
+  void move_trig_negativ_attenuator(int _steps_number);
   float read_encoder();
-  int initialisation_position_attenuator();
+  int; int initialisation_position_attenuator();
   int emergency_stop_R;
   int fault_stop_A;
   int fault_stop_R;
 
 
 private:
+  HighPowerStepperDriver _sd;         // SPI class
   void setDirection_R(int _Direction_Pin, bool _dir);
-  void setDirection_A(HighPowerStepperDriver &_sd, int _dir);
+  void setDirection_A(  int _dir);
   void step_R(int _StepPin_R);
-  void step_A(HighPowerStepperDriver &_sd);
+  void step_A();
   int _phototransistor_pin; // rphotostranstor pin reading value 
   int _DirPin_R;   // Direction pin for rotation control motor
   int _StepPin_R;  // Pin to send pulse to do a step for rotation control motor
   int _CSPin_A;    // Chip select pin for SPI connection (Attenuator driver)
-  HighPowerStepperDriver _sd;         // SPI class
+  int _is_signal_phototransistor; // variable conatining the value of the phottransistor for attenuator position
   int _rotation_number_before_measure_position;
-  int _position_attenuator_motor; // Very import stores value of the position motor take care when changing this value
+  int _position_attenuator_motor; // stores value of the position motor take care when changing this value
   int _dl;                       // delay motor rotation
-  int _delay_attenuation_motor;  // delay motor attenuator
   int _steps_number;             // steps to do attenuator
   int _clock_positiv;            // encoder clock +
   int _clock_negativ;            // encoder clock -

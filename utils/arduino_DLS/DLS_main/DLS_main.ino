@@ -4,7 +4,7 @@ DLS_library DLS_library(9,10,11,12,13, 53, 7,8,23);
 int dl = 20;                       //  time between each motor step for the turntable (ms)
 int delay_attenuation_motor = 20;  //  time between each motor step for the attenuator (ms)
 int is_signal_phototransistor;     // variable containing the result of initialisation of the attenuator motor
-int position_motor_attenuator;     // Variable containing the position of the attenuation motor
+int position_motor_attenuator=0;     // Variable containing the position of the attenuation motor
 float position_motor_rotation;     // Variable containing the position of the rotation motor
 char operation;                    // Variable containing R or W for Read or Write
 char motor_select;                 // Variable containing A or T for Attenuator motor and Turntable motor
@@ -21,6 +21,7 @@ int stall_attenuator_pin = 3;                 // Pin receives low when drivers d
 int fault_detection_rotation_motor_pin = 19;  // Pin to read if a fault is detected in the motor attenuation
 int limit_switch_1_pin = 20;                  // Pin to read if the limit switch has been reached
 int limit_switch_2_pin = 21;                  // Pin to read if the limit switch has been reached
+int output_init_attenuator;
 
 void fault_stop_attenuation() {
   DLS_library.fault_stop_A = 1;
@@ -38,24 +39,34 @@ void setup() {
   pinMode(fault_attenuator_control_pin, INPUT);
   pinMode(stall_attenuator_pin, INPUT);
   pinMode(fault_detection_rotation_motor_pin, INPUT);
-  attachInterrupt(digitalPinToInterrupt(fault_attenuator_control_pin), fault_stop_attenuation, RISING);
+  attachInterrupt(digitalPinToInterrupt(fault_attenuator_control_pin), fault_stop_attenuation, FALLING);
   attachInterrupt(digitalPinToInterrupt(stall_attenuator_pin), fault_stop_attenuation, RISING);
   attachInterrupt(digitalPinToInterrupt(fault_detection_rotation_motor_pin), fault_stop_rotation, RISING);
   attachInterrupt(digitalPinToInterrupt(limit_switch_1_pin),emergency_stop_rotation, RISING);
   attachInterrupt(digitalPinToInterrupt(limit_switch_2_pin),emergency_stop_rotation, RISING);
+  output_init_attenuator, position_motor_attenuator=DLS_library.initialisation_position_attenuator();
 }
 
 void loop() {
 
   if (Serial.available() > 0) {
     operation = Serial.read();
-
-    motor_select = Serial.read();
+    
+    Serial.println("Operation : ");
+    Serial.println(operation);
+    
     switch (operation) {
       case 'M':
+      motor_select = Serial.read();
+      Serial.println("motor select :");
+      Serial.println(motor_select);
         if (motor_select == 'T') {
           rotation_direction = Serial.read();
+          Serial.println("rotation _direction:");
+          Serial.println(rotation_direction);
           steps_to_do = Serial.parseFloat();
+          Serial.println("steps_ to do :");
+          Serial.println(steps_to_do);
           if (rotation_direction == 'P') {
             while (condition == 0) {  // condition needs to be determined with reduction ratio
 
@@ -111,30 +122,34 @@ void loop() {
           {
             rotation_direction = 'P';
             steps_to_do = step_to_reach - position_motor_attenuator;
+            Serial.print(steps_to_do);
           } else if (step_to_reach - position_motor_attenuator > 0)  // to ensure that zero is the right value
           {
             rotation_direction = 'N';
+            steps_to_do = step_to_reach - position_motor_attenuator;
           } else {
             rotation_direction = 'H';  // case where it is already at the asked value no movement need here
           }
           if (rotation_direction == 'P') {
-            DLS_library.move_trig_positiv_attenuator(steps_to_do, delay_attenuation_motor);
+            DLS_library.move_trig_positiv_attenuator(steps_to_do);
             if (DLS_library.fault_stop_A == 1) {
               Serial.write("error_attenuation_motor\n");
               break;
-            } else {
+            } 
+            else {
               Serial.write("movement_attenuation_finished,");
                 Serial.write(char(position_motor_attenuator));
                   Serial.write("\n");
+                  position_motor_attenuator = abs((position_motor_attenuator + steps_to_do) % 200); // change 200 to the number of step per turn 
             }
-            position_motor_attenuator = abs((position_motor_attenuator + steps_to_do) % 360);
+            
           } else if (rotation_direction == 'N') {
-            DLS_library.move_trig_positiv_attenuator(steps_to_do, delay_attenuation_motor);
+            DLS_library.move_trig_positiv_attenuator(steps_to_do);
             if (DLS_library.fault_stop_A == 1) {
               Serial.write("error_attenuation_motor\n");
               break;
             } else {
-              position_motor_attenuator = abs((position_motor_attenuator - steps_to_do) % 360);
+              position_motor_attenuator = abs((position_motor_attenuator - steps_to_do) % 200); // change 200 to the number of step per turn 
               Serial.write("movement_attenuation_finished,");
                 Serial.write(char(position_motor_attenuator));
                   Serial.write("\n");
@@ -165,8 +180,9 @@ void loop() {
       case 'C':  // ping from python code at the beginning to see if arduino is connected
         Serial.write("ALIVE");
         break;
-      case 'I':
+      case 'I': 
         is_signal_phototransistor = DLS_library.initialisation_position_attenuator();  //
+        Serial.write(char(is_signal_phototransistor));
         if (is_signal_phototransistor == 0) {
           Serial.write("Error_init_attenuator\n");
         }
@@ -183,6 +199,8 @@ void loop() {
         Serial.write(char(position_motor_rotation));
         Serial.write("\n");
         break;
+      default:
+      break;
     }
   }
   if (DLS_library.emergency_stop_R == 1) {

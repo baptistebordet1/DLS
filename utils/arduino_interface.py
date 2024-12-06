@@ -46,7 +46,6 @@ class Arduino_communication():
         string_to_send=b"C"
         self.arduino.write(string_to_send)
         is_connected=self.arduino.read(5)
-        print(is_connected)
         if is_connected !=b"ALIVE":
             raise serial.SerialTimeoutException("Arduino")
         self.arduino.write(b"I")
@@ -180,7 +179,7 @@ class Arduino_communication():
         None.
 
         """
-        angle_to_reach=Arduino_interface.ATTENUATOR_MOTOR_POSITION(position_to_reach)
+        angle_to_reach=Arduino_interface.ATTENUATOR_MOTOR_POSITION[position_to_reach]
         try: 
             string_to_send="MA"+angle_to_reach
             self.arduino.write(self.var_to_byte(string_to_send))
