@@ -193,7 +193,7 @@ class Window(container.QWidgetContainer):
         
     # This is a work around to wait for a motor movement without blocking the entire code     
     def connect_signals_start_calib(self): 
-        self.stop_PD_timer()
+        #self.stop_PD_timer()
         self.motor_rotation_control.calib_window.send_calibration_step.connect(self.worker.send_calibration_turntable)
         self.worker.calibration_step_done.connect(self.motor_rotation_control.calib_window.one_measurement)
     

@@ -33,11 +33,11 @@ class pico_block_aquisition():
             # If powerstate is the same as 282 then it will run this if statement
             if self.powerstate == 282:
                 # Changes the power input to "PICO_POWER_SUPPLY_NOT_CONNECTED"
-                self.status["ChangePowerSource"] = self.ps.ps3000aChangePowerSource(self.chandle, 282)
+                self.status["ChangePowerSource"] = ps.ps3000aChangePowerSource(self.chandle, 282)
                 # If the powerstate is the same as 286 then it will run this if statement
             elif self.powerstate == 286:
                 # Changes the power input to "PICO_USB3_0_DEVICE_NON_USB3_0_PORT"
-                self.status["ChangePowerSource"] = self.ps.ps3000aChangePowerSource(self.chandle, 286)
+                self.status["ChangePowerSource"] = ps.ps3000aChangePowerSource(self.chandle, 286)
             else:
                 raise
         

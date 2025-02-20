@@ -7,10 +7,11 @@ Created on Thursday May 23 2024
 
 import pyqtgraph
 from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtCore import pyqtSignal, pyqtSlot
+from PyQt5.QtCore import pyqtSignal, pyqtSlot, QTimer
 from pylablib.core.gui.widgets import param_table, container
-#from test_DLS.picosdk_python_wrappers_master.ps3000aExamples import ps3000aBlockExample # change here 
+from test_DLS.picosdk_python_wrappers_master.ps3000aExamples import ps3000aBlockExample # change here 
 from utils import constants
+import time
 
 import numpy as np
 
@@ -46,28 +47,45 @@ class Calibration(container.QFrameContainer):
         self.peaks_pos=[]
         self.motor_positions=[]
         self.i=0
+        self.calib_measure=ps3000aBlockExample.pico_block_aquisition()
+        self.calib_measure.setup()# TODO add here the measurements from FPGA photodiode when available 
         self.one_step_move()
         
-    @pyqtSlot()    
+    @pyqtSlot(float)    
     def one_measurement(self,motor_pos):
-        #calib_measure=ps3000aBlockExample.pico_block_aquisition() # TODO add here the measurements from FPGA photodiode when available 
+
         self.motor_positions.append(motor_pos)
-        self.calib_data.append(calib_measure.acquire())
+        self.calib_data.append(self.calib_measure.acquire())
         self.i=self.i+1
-        if self.i<=constants.Arduino_interface.MAX_ROTATION_FULL_TURN:
+        if self.i<constants.Arduino_interface.MAX_ROTATION_FULL_TURN:
              self.one_step_move()
         else:  #calibration finished
+            print("here")
+            self.calib_measure.close_comm()
+            self.calib_plot.scene().sigMouseClicked.connect(self.add_mouse_position_click)
             self.calib_plot.plot(self.calib_data)
             self.new_win.close()
+            self.clicked_timer=QTimer(self)
+            self.clicked_timer.setInterval(100)
+            self.clicked_timer.timeout.connect(self.ready_treatment_check)
+            self.clicked_timer.start()
+            
+    @pyqtSlot()
+    def ready_treatment_check(self):
+        if len(self.peaks_pos)==2:
+            self.clicked_timer.stop()
             self.calibration_treatment()
-        
+            
+    
     def one_step_move(self):
         self.send_calibration_step.emit()
         
+    @pyqtSlot(object)    
+    def add_mouse_position_click(self,pos):
+        self.pos=pos.pos()[0]
+        self.peaks_pos.append(pos.pos()[0])
     def calibration_treatment(self):
-        while len(self.peaks_pos)<2:
-            #TODO check what happens here
-            self.peaks_pos.append(pyqtgraph.SignalProxy(self.calib_plot.scene().sigMouseClicked).scenePos())
+       
         idx_first_peak=np.where(np.min(self.peaks_pos[0][0]-self.motor_positions))[0]
         slice_first_peak=(0,idx_first_peak+len(self.motor_positions)/4)
         idx_first_peak=np.where(np.max(self.calib_data[slice_first_peak]))[0]

@@ -17,11 +17,12 @@ public:
   void move_trig_positiv_rotation_platine(int _rotation_number_before_measure_position, int _dl);
   void move_trig_negativ_rotation_platine(int _rotation_number_before_measure_position, int _dl);
   char flip(char _c);
-  int graytoInt(String _gray);
+  String graytoInt(String _gray);
   void move_trig_positiv_attenuator(int _steps_number);
   void move_trig_negativ_attenuator(int _steps_number);
   float read_encoder();
-  int; int initialisation_position_attenuator();
+  int initialisation_position_attenuator();
+  float map_float(long x, long in_min, long in_max, float out_min, float out_max);
   int emergency_stop_R;
   int fault_stop_A;
   int fault_stop_R;
@@ -47,7 +48,7 @@ private:
   int _data_positiv;             // encoder data +
   int _data_negativ;             // encoder data -
   int _sense;                    // Rotation direction pin for encoder
-  int _data_read_positiv;        // digital value read from encoder
+  int _data_read_positiv[25];        // digital value read from encoder
   String _gray_code;             // String holding full message from encoder
   String _multi_turn_gray;       // String holding the multi-turn infomation from encoder
   String _single_turn_gray;      // String holding the single turn information from encoder

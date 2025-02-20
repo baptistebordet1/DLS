@@ -11,7 +11,8 @@ from pathlib import Path
 import os
 import struct 
 import numpy as np
- 
+import time
+
 class Worker(QObject):
     
     update_gui_data=pyqtSignal(dict, dict )
@@ -23,7 +24,7 @@ class Worker(QObject):
     error_attenuation_motor=pyqtSignal(int,str)
     critical_error=pyqtSignal(int,str)
     kill_process=pyqtSignal()
-    calibration_step_done=pyqtSignal()
+    calibration_step_done=pyqtSignal(float)
     auto_find_att_step_done=pyqtSignal()
     new_data_point_photodiode=pyqtSignal(int)
 
@@ -31,7 +32,7 @@ class Worker(QObject):
         self.dict_status={"current_action":"None", "detection_angle":None, "attenuation_value":None, 
                           "laser_status":"Off","arduino_connected":"Not connected",
                           "acquisition_progress":"No acquisition","error":"None"}
-        self.dict_motors_positions={"Rotation motor pos":150,"Attenuation motor pos":0}
+        self.dict_motors_positions={"Rotation motor pos":0,"Attenuation motor pos":0}
         self.update_timer=QTimer(self)
         self.update_timer.setInterval(100)
         self.update_timer.timeout.connect(self.send_update_gui_command)
@@ -45,11 +46,13 @@ class Worker(QObject):
         self.read_arduino_timer.timeout.connect(self.read_arduino)
         self.read_arduino_timer.start()
         self.previous_command_arduino=""
+        
+
         self.PD_timer=QTimer(self)
         self.PD_timer.setInterval(1000)
         self.PD_timer.timeout.connect(self.ask_photodiode_value)
-        self.fpga_serial_ascii=FPGA_interface.FPGA_serial_ASCII()
-        self.fpga_serial_data=FPGA_interface.FPGA_serial_data() # to be passed in subprocess 
+        #self.fpga_serial_ascii=FPGA_interface.FPGA_serial_ASCII()
+        #self.fpga_serial_data=FPGA_interface.FPGA_serial_data() # to be passed in subprocess 
         #self.PD_timer.start()
         
     def ask_photodiode_value(self):
@@ -71,21 +74,21 @@ class Worker(QObject):
                 self.error_attenuation_motor.emit(self.tried_restart_attenuator,"1")
                 self.tried_restart_attenuator=self.tried_restart_attenuator+1
             elif b"motor_rotating" in self.received_message:
-                position_motor=self.arduino_comm.converter_angle_rotation_turntable_dec_to_deg(self, float(self.received_message[14:-2]))
+                position_motor=self.arduino_comm.converter_angle_rotation_turntable_dec_to_deg(float(str(self.received_message[15:-2].decode("utf-8"))))
                 self.dict_motors_positions["Rotation motor pos"]=position_motor
             elif b"movement_finished" in self.received_message:
-                position_motor=self.arduino_comm.converter_angle_rotation_turntable_dec_to_deg(self, float(self.received_message[17:-2]))
+                position_motor=self.arduino_comm.converter_angle_rotation_turntable_dec_to_deg(float(str(self.received_message[18:-2].decode("utf-8"))))
                 self.dict_motors_positions["Rotation motor pos"]=position_motor
                 self.dict_status["current_action"]="None"
-            elif b"calibration_movement_finished" in self.received_message:
-                self.position_calibration=self.received_message[29:-2]
-                self.calibration_step_done.emit()
+                print("end")
+            elif b"finished_movement" in self.received_message:
+                self.position_calibration=self.received_message[31:-2]
+                self.calibration_step_done.emit(float(str(self.position_calibration.decode("utf-8"))))
             elif b"movement_attenuation_finished" in self.received_message:
                 if self.auto_find==1:
                     self.auto_find_att_step_done.emit(self)
-                #TODO check the value of attenuator position maybe convert it via dict in constants 
-                position_attenuator=int(self.received_message[29:-2])
-                self.dict_motors_positions["Attenuation motor pos"]=position_attenuator
+                position_attenuator=int(self.received_message[30:])
+                self.dict_motors_positions["Attenuation motor pos"]=list(constants.Arduino_interface.ATTENUATOR_MOTOR_POSITION.keys())[list(constants.Arduino_interface.ATTENUATOR_MOTOR_POSITION.values()).index(str(position_attenuator))]
                 self.dict_status["current_action"]="None"
         
                 
@@ -95,11 +98,8 @@ class Worker(QObject):
     @pyqtSlot(float)            
     def send_rotation_command(self,position_goal):
         #TODO test that the condition is in the right order
-        if self.dict_motors_positions["Rotation motor pos"]-position_goal>position_goal-self.dict_motors_positions["Rotation motor pos"]:
-            direction_rotation="P"
-        else: 
-            direction_rotation="N"
-        self.arduino_comm.send_rotation_turntable(position_goal, direction_rotation)
+
+        self.arduino_comm.send_rotation_turntable(position_goal)
         self.previous_command_arduino="ROTATION,"+str(position_goal)
         self.dict_status["current_action"]="Rotation turntable"
         

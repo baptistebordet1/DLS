@@ -32,7 +32,7 @@ class Arduino_communication():
         """
         for port, desc, hwid in sorted(list_ports.comports()): # list all available ports
         #TODO check if this works on other computers with Arduino Mega 2560
-            if "Arduino" in desc:
+            if "USB Serial" in desc:
                 arduino_port=port  
         try: 
             self.arduino = serial.Serial(arduino_port, baud_rate,timeout=timeout, write_timeout=timeout)
@@ -45,10 +45,12 @@ class Arduino_communication():
         
         string_to_send=b"C"
         self.arduino.write(string_to_send)
-        is_connected=self.arduino.read(5)
-        if is_connected !=b"ALIVE":
+        is_connected=self.arduino.read_until()
+        if b"ALIVE" not in is_connected:
             raise serial.SerialTimeoutException("Arduino")
         self.arduino.write(b"I")
+
+
     
     """
     UNIT CONVERSIONS 
@@ -136,16 +138,13 @@ class Arduino_communication():
     """
     
         
-    def send_rotation_turntable(self, angle_rotation, direction_rotation): 
+    def send_rotation_turntable(self, angle_rotation): 
         """
         Parameters
         ----------
-        angle_rotation : int 
+        angle_rotation : float 
             angle to reach (not how much you move).
             it is in degree and is converted just before being send to the arduino
-        direction_rotation : str
-            "P" or "N" indicate the direction for rotation 
-
         Returns
         -------
         None.
@@ -153,14 +152,14 @@ class Arduino_communication():
         """
         angle_rotation_dec=self.converter_angle_rotation_turntable_deg_to_dec(angle_rotation)
         try:
-            string_to_send="MT"+direction_rotation+str(angle_rotation_dec) # angle_rotation_dec is float 
+            string_to_send="MT"+str(angle_rotation_dec) # angle_rotation_dec is float 
             self.arduino.write(self.var_to_byte(string_to_send)) 
         except serial.SerialTimeoutException:
             raise serial.SerialTimeoutException("Arduino")
        
     def send_rotation_calibration_turntable(self):
         try:
-            string_to_send="E"+str(Arduino_interface.CALIBRATION_STEPS)
+            string_to_send="ET"+str(Arduino_interface.CALIBRATION_STEPS)
             self.arduino.write(self.var_to_byte(string_to_send)) 
         except serial.SerialTimeoutException:
             raise serial.SerialTimeoutException("Arduino")
