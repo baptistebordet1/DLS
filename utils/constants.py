@@ -13,8 +13,8 @@ class Arduino_interface():
     TURNTABLE_ANGLE_MAX_DEG=180 # 180° angle 
     TURNTABLE_ANGLE_MAX_DEC=180 # calculated angle from the 0 position thanks to reduction ratio
     ATTENUATOR_MOTOR_POSITION={0:"144", 1:"168", 2:"0",3:"24",4:"48",5:"72",6:"96",7:"120"} # one full turn of the Attenuator is 192 steps.
-    CALIBRATION_STEPS= 4000 # (must be an int) number of steps done before a new measurement is made for the turntable calibration
-    MAX_ROTATION_FULL_TURN=3 # max number of rotation of the rotation motor (one full trun is 200 steps)
+    CALIBRATION_STEPS= 10 # (must be an int) number of steps done before a new measurement is made for the turntable calibration
+    MAX_ROTATION_FULL_TURN=10 # max number of rotation of the rotation motor 
     PHOTODIODE_ATTENUATOR_THRESHOLD=45 # threshold for the photiode for autofind of attenuation 
     
 class Acquisition_time_limit():

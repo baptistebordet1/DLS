@@ -1,8 +1,8 @@
 #include "DLS_library.h"
-DLS_library DLS_library(9,10,11,12,5, 53, 4,8,23);
+DLS_library DLS_library(A0,A1,A2,A3,4, 10, 19,18,3);
 
 int dl = 20;                       //  time between each motor step for the turntable (ms)
-int delay_attenuation_motor = 20;  //  time between each motor step for the attenuator (ms)
+
 int is_signal_phototransistor;     // variable containing the result of initialisation of the attenuator motor
 int position_motor_attenuator=0;     // Variable containing the position of the attenuation motor
 float position_motor_rotation;     // Variable containing the position of the rotation motor
@@ -13,16 +13,15 @@ int steps_to_do;                   // Variable containing the number of steps to
 float steps_to_do_rotation;                   // Variable containing the number of steps to move for the rotation motor
 int step_to_reach;                 // Variable containing the position to reach for the attenuator motor
 float step_to_reach_rotation;        // Variable containing the position to reach for the rotation motor
-int condition = 0;
 int rotation_number_before_measure_position;  // Variable containing the steps between position measurements for platine rotation
-int relay_R_pin = 7;                         // Pin for relay for rotation motor, fault restart and stop the power of motor in case of limit switches reached
+int relay_R_pin = 2;                         // Pin for relay for rotation motor, fault restart and stop the power of motor in case of limit switches reached
 int state_relay_R = 0;                        // state of the relay 0: closed (motor powered), 1: open (motor stopped)
-int reset_attenuator_control_pin= 22;         // Pin to try to reset the attenuator control
-int fault_attenuator_control_pin = 2;         // Pin receive LOW when driver detects fault in motor (over temperature,over voltage over current  )
-int stall_attenuator_pin = 3;                 // Pin receives low when drivers detect a stall in the attenuator motor (attempt to reset the chip and restart procedure)
-int fault_detection_rotation_motor_pin = 19;  // Pin to read if a fault is detected in the motor attenuation
-int limit_switch_1_pin = 20;                  // Pin to read if the limit switch has been reached
-int limit_switch_2_pin = 21;                  // Pin to read if the limit switch has been reached
+int reset_attenuator_control_pin= 9;         // Pin to try to reset the attenuator control
+int fault_attenuator_control_pin = 8;         // Pin receive LOW when driver detects fault in motor (over temperature,over voltage, over current)
+int stall_attenuator_pin = 7;                 // Pin receives low when drivers detect a stall in the attenuator motor (attempt to reset the chip and restart procedure)
+int fault_detection_rotation_motor_pin = 5;  // Pin to read if a fault is detected in the motor attenuation
+int limit_switch_pin = 6;                  // Pin to read if the limit switch has been reached
+
 
  
 void fault_stop_attenuation() {
@@ -42,13 +41,11 @@ void setup() {
   pinMode(fault_attenuator_control_pin, INPUT);
   pinMode(stall_attenuator_pin, INPUT);
   pinMode(fault_detection_rotation_motor_pin, INPUT);
-  pinMode(limit_switch_1_pin, INPUT);
-  pinMode(limit_switch_2_pin, INPUT);
+  pinMode(limit_switch_pin, INPUT);
   attachInterrupt(digitalPinToInterrupt(fault_attenuator_control_pin), fault_stop_attenuation, FALLING);
   attachInterrupt(digitalPinToInterrupt(stall_attenuator_pin), fault_stop_attenuation, RISING);
   attachInterrupt(digitalPinToInterrupt(fault_detection_rotation_motor_pin), fault_stop_rotation, RISING);
-  attachInterrupt(digitalPinToInterrupt(limit_switch_1_pin),emergency_stop_rotation, RISING);
-  attachInterrupt(digitalPinToInterrupt(limit_switch_2_pin),emergency_stop_rotation, RISING);
+  attachInterrupt(digitalPinToInterrupt(limit_switch_pin),emergency_stop_rotation, RISING);
   position_motor_attenuator=DLS_library.initialisation_position_attenuator();
 }
 

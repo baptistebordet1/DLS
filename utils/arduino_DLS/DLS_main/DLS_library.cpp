@@ -39,12 +39,13 @@ void DLS_library::begin() {
   _sd.clearStatus();
   // Select auto mixed decay.  TI's DRV8711 documentation recommends this mode
   // for most applications, and we find that it usually works well.
-  _sd.setDecayMode(HPSDDecayMode::SlowIncAutoMixedDec);
+  _sd.setDecayMode(HPSDDecayMode::SlowIncMixedDec);
   // Set the current limit. You should change the number here to an appropriate
   // value for your particular system.
   _sd.setCurrentMilliamps36v4(1000);
   // Set the number of microsteps that correspond to one full step.
-  _sd.setStepMode(HPSDStepMode::MicroStep8);
+  _sd.setStepMode(HPSDStepMode::MicroStep32);
+
 }
 
 // Generic functions for motor
@@ -67,7 +68,7 @@ void DLS_library::step_R(int _StepPin_R) {
 }
 void DLS_library::step_A() {
   _sd.step();
-  delayMicroseconds(200000);
+  delayMicroseconds(5000);
 }
 
 // Rotation motor control
@@ -99,6 +100,7 @@ void DLS_library::move_trig_positiv_attenuator(int _steps_number) {
   for (unsigned int x = 0; x < abs(_steps_number); x++) {
     DLS_library::step_A();
     DLS_library::_position_attenuator_motor++;
+
     if (DLS_library::_position_attenuator_motor == 192) {
       DLS_library::_position_attenuator_motor = 0;
       DLS_library::_is_signal_phototransistor = digitalRead(_phototransistor_pin);
@@ -112,6 +114,7 @@ void DLS_library::move_trig_positiv_attenuator(int _steps_number) {
       break;
     }
   }
+  delay(10);
   DLS_library::_sd.disableDriver();
 }
 void DLS_library::move_trig_negativ_attenuator(int _steps_number) {
@@ -134,6 +137,7 @@ void DLS_library::move_trig_negativ_attenuator(int _steps_number) {
       break;
     }
   }
+  delay(10);
   DLS_library::_sd.disableDriver();
 }
 int DLS_library::initialisation_position_attenuator() {
@@ -194,7 +198,6 @@ float DLS_library::read_encoder() {
   for (int i = 0; i < 25; i++) {
     digitalWrite(_clock_positiv, LOW);
     digitalWrite(_clock_negativ, HIGH);
-    
     digitalWrite(_clock_negativ, LOW);
     digitalWrite(_clock_positiv, HIGH);
     _data_read_positiv[i]= digitalRead(_data_positiv);
