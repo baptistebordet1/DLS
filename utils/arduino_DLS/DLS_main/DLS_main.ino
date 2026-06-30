@@ -1,5 +1,5 @@
 #include "DLS_library.h"
-DLS_library DLS_library(A0,A1,A2,A3,4, 10, 19,18,3);
+DLS_library DLS_library(A0,A1,A2,A3,4, 10, 19,18,2);
 
 int dl = 20;                       //  time between each motor step for the turntable (ms)
 
@@ -14,7 +14,7 @@ float steps_to_do_rotation;                   // Variable containing the number 
 int step_to_reach;                 // Variable containing the position to reach for the attenuator motor
 float step_to_reach_rotation;        // Variable containing the position to reach for the rotation motor
 int rotation_number_before_measure_position;  // Variable containing the steps between position measurements for platine rotation
-int relay_R_pin = 2;                         // Pin for relay for rotation motor, fault restart and stop the power of motor in case of limit switches reached
+int relay_R_pin = 3;                         // Pin for relay for rotation motor, fault restart and stop the power of motor in case of limit switches reached
 int state_relay_R = 0;                        // state of the relay 0: closed (motor powered), 1: open (motor stopped)
 int reset_attenuator_control_pin= 9;         // Pin to try to reset the attenuator control
 int fault_attenuator_control_pin = 8;         // Pin receive LOW when driver detects fault in motor (over temperature,over voltage, over current)
@@ -58,7 +58,13 @@ void loop() {
       case 'M':      
         if (motor_select == 'T') {
           step_to_reach_rotation = Serial.parseFloat();
+          if (step_to_reach_rotation<316.082 && step_to_reach_rotation>183.914){
+            break;
+          }
           position_motor_rotation=DLS_library.read_encoder();
+          if (abs(position_motor_rotation-step_to_reach_rotation >131)){
+
+          }
           if (position_motor_rotation<step_to_reach_rotation){
             rotation_direction='N';
           }
@@ -98,11 +104,12 @@ void loop() {
             Serial.write("movement_finished,");
             Serial.print(position_motor_rotation,3);
             Serial.write("\n");
-          } else if (rotation_direction=='N') {
+          } 
+          if (rotation_direction == 'N') {
             position_motor_rotation=DLS_library.read_encoder();
             steps_to_do_rotation = step_to_reach_rotation - position_motor_rotation;
+            Serial.println(steps_to_do_rotation);
             while (steps_to_do_rotation > 0) {  
-      
               if (abs(steps_to_do_rotation) > 0.5) {
                 
                 rotation_number_before_measure_position = 10*200;
@@ -122,68 +129,34 @@ void loop() {
               steps_to_do_rotation = step_to_reach_rotation - position_motor_rotation;
             }
             position_motor_rotation = DLS_library.read_encoder();
+
             Serial.write("movement_finished,");
             Serial.print(position_motor_rotation,3);
             Serial.write("\n");
-          } else {
+          } 
+           else {
             break;
             // character not recognised
           }
 
         } else if (motor_select == 'A') {
           step_to_reach = Serial.parseInt();
-
-          if (step_to_reach - position_motor_attenuator < 0)  // To ensure that 0 is the right value
-          {
-            rotation_direction = 'P';
-            steps_to_do = step_to_reach - position_motor_attenuator;
-
-          } else if (step_to_reach - position_motor_attenuator > 0)  // to ensure that zero is the right value
-          {
-            rotation_direction = 'N';
-            steps_to_do = step_to_reach - position_motor_attenuator;
-            
-          } else {
-            rotation_direction = 'H';  // case where it is already at the asked value no movement need here
-          }
-
-          if (rotation_direction == 'P') {
-            DLS_library.move_trig_positiv_attenuator(steps_to_do);
+            position_motor_attenuator=DLS_library.move_trig_positiv_attenuator(step_to_reach);
             if (DLS_library.fault_stop_A == 1) {
               Serial.write("error_attenuation_motor\n");
               break;
             } 
             else {
-              position_motor_attenuator = abs((position_motor_attenuator + steps_to_do) % 192); // change 200 to the number of step per turn 
               Serial.write("movement_attenuation_finished,");
                 Serial.print(position_motor_attenuator);
-                Serial.write("\n");
-                
-                  
-            }
-            
-          } else if (rotation_direction == 'N') {
-            DLS_library.move_trig_negativ_attenuator(steps_to_do);
-            if (DLS_library.fault_stop_A == 1) {
-              Serial.write("error_attenuation_motor\n");
-              break;
-            } else {
-              position_motor_attenuator = abs((position_motor_attenuator + steps_to_do) % 192); // change 200 to the number of step per turn 
-               Serial.write("movement_attenuation_finished,");
-                Serial.print(position_motor_attenuator);
-                Serial.write("\n");
-
-                
+                Serial.write("\n");     
             }
 
-          } else {
-            break;
-            // character not recognised, unexpected rotation direction
-          }
-        } else {
+          } 
+         else {
           break;
           // character not recognised, unexpected motor selection
-        }
+      
 
         break;
       case 'R':  // not used now still here in case it is needed for the python code to acess manually the values of the positions (it is normally send after a movement and not refreshed until another movement is started )
@@ -197,7 +170,6 @@ void loop() {
           Serial.write("\n");
           break;
         }
-        break;
       case 'E':  // calibration move
         rotation_number_before_measure_position = Serial.parseInt();
         DLS_library.move_trig_positiv_rotation_platine(rotation_number_before_measure_position, dl);
@@ -211,6 +183,7 @@ void loop() {
         Serial.write("\n");
         break;
     }
+  }
   }
   else if (Serial.available()>0){
     operation = Serial.read();

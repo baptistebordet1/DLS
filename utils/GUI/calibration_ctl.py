@@ -7,17 +7,17 @@ Created on Thursday May 23 2024
 
 import pyqtgraph
 from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtCore import pyqtSignal, pyqtSlot, QTimer
+from PyQt5.QtCore import pyqtSignal, pyqtSlot
 from pylablib.core.gui.widgets import param_table, container
-from test_DLS.picosdk_python_wrappers_master.ps3000aExamples import ps3000aBlockExample # change here 
+from utils.FPGA_interface import FPGA_serial_ASCII
 from utils import constants
-import time as time
 
-import numpy as np
+
+import numpy as np 
 
 class Calibration(container.QFrameContainer):
     send_calibration_step=pyqtSignal()
-    def setup(self):#here add the interace thread to be able to sned command via the fpga
+    def setup(self,i_thread):#here add the interace thread to be able to sned command via the fpga
         super().setup()
         self.setWindowTitle("Calibration Motor")
         self.setWindowFlag(QtCore.Qt.Dialog)
@@ -35,10 +35,14 @@ class Calibration(container.QFrameContainer):
             self.calib_plot.setMinimumWidth(500)
             self.params=self.add_child("window",param_table.ParamTable(self))
             self.params.setup(add_indicator=False)
+            self.params.add_num_edit("first_peak",label="1st peak estimation :")
+            self.params.add_num_edit("second_peak",label="2nd peak estimation :")
+            self.params.add_button("validate_estimations", "validate estimations")
             self.params.add_button("start_calib",caption="Start Calibration")  
             self.params.w["start_calib"].clicked.connect(self.start_calibration)
         self.layout().setSizeConstraint(QtWidgets.QLayout.SetFixedSize)
-        
+        self.i_thread=i_thread
+
     def start_calibration(self):
         self.calib_data=[]
         self.peaks_pos=[]
@@ -47,62 +51,56 @@ class Calibration(container.QFrameContainer):
         self.new_win.setup()
         self.new_win.show()
         self.i=0
-        self.calib_measure=ps3000aBlockExample.pico_block_aquisition()
-        self.calib_measure.setup()# TODO add here the measurements from FPGA photodiode when available 
+        self.calib_measure=self.i_thread.fpga_serial_ascii
+        print(self.calib_measure)
         self.one_step_move()
         
     @pyqtSlot(float)    
     def one_measurement(self,motor_pos):
 
         self.motor_positions.append(motor_pos)
-        self.calib_data.append(self.calib_measure.acquire())
+        self.calib_data.append(self.calib_measure.ask_pd_value())
         self.i=self.i+1
         if self.i<constants.Arduino_interface.MAX_ROTATION_FULL_TURN:
              self.one_step_move()
         else:  #calibration finished
             self.calib_measure.close_comm()
-            self.calib_plot.getPlotItem().scene().sigMouseClicked.connect(self.add_mouse_position_click)
-            self.calib_plot.plot(self.calib_data)
+            self.calib_plot.plot(self.motor_positions,self.calib_data)
             self.new_win.close()
-            self.clicked_timer=QTimer(self)
-            self.clicked_timer.setInterval(100)
-            self.clicked_timer.timeout.connect(self.ready_treatment_check)
-            self.clicked_timer.start()
-
+            self.params.w["validate_estimations"].clicked.connect(self.calibration_treatment)
             
-    @pyqtSlot()
-    def ready_treatment_check(self):
-        if len(self.peaks_pos)==2:
-            self.clicked_timer.stop()
-            self.calibration_treatment()
+
     def one_step_move(self):
         self.send_calibration_step.emit()
         
-    @pyqtSlot(object)    
-    def add_mouse_position_click(self,posi):
-        #posi.currentItem=self.calib_plot.getPlotItem()
-        self.position=posi.pos()[0]
-        print(self.position)
-        self.peaks_pos.append(posi.posi.pos()[0])
         
     def calibration_treatment(self):
-
-        idx_first_peak=np.where(np.min(self.peaks_pos[0]-np.array(self.motor_positions)))[0]
-        slice_first_peak=(0,idx_first_peak+int(len(self.motor_positions)/4))
-        
-        idx_first_peak=np.where(np.max(self.calib_data[slice_first_peak[0]:slice_first_peak[1][0]]))[0]
-        idx_second_peak=np.where(np.min(self.peaks_pos[1]-np.array(self.motor_positions)))[0]
-        print(self.peaks_pos)
-
-        slice_second_peak=(idx_second_peak-int(len(self.motor_positions)/4),len(self.motor_positions)-1)
-        idx_second_peak=np.where(np.max(self.calib_data[slice_second_peak[0]:slice_second_peak[1]]))[0]
-        self.reduction_ratio=360/(self.motor_positions[idx_second_peak]-self.motor_positions[idx_first_peak])
-        self.zero_position=self.motor_positions[idx_first_peak]
+        if self.params.v["first_peak"]!="":
+            self.peaks_pos.append(self.params.v["first_peak"])
+        else:
+            raise ValueError("no value entered in estimation of first peak")
+            return
+        if self.params.v["second_peak"]!="":
+            self.peaks_pos.append(self.params.v["second_peak"])
+        else:
+            raise ValueError("no value entered in estimation of second peak")  
+            return
+        peaks=[]
+        for j in range(0,1):
+            idx = np.where(self.motor_positions-self.peaks_pos[j]<0.01)[0][0] # à ajuster en fonction du pas du moteur
+            for i in range(int(idx-0.1*len(self.motor_positions)),int(idx+0.1*len(self.motor_positions))):
+                diff_gauche=self.motor_positions[i]-self.motor_positions[i-1]
+                diff_droite=self.motor_positions[i+1]-self.motor_positions[i]
+                ratio_diff=np.abs(diff_gauche/diff_droite)
+                if ratio_diff>0.1:
+                    peaks.append(self.motor_positions[i])      
+        self.reduction_ratio=360/(peaks[1]-peaks[0])
         pen=pyqtgraph.mkPen(c="r")
-        self.calib_plot.addItem(pyqtgraph.InfiniteLine(self.zero_position,angle=90,pen=pen))
-        self.calib_plot.addItem(pyqtgraph.InfiniteLine(self.motor_positions[idx_second_peak],angle=90,pen=pen))
-        self.params.add_text_label("zero_pos", value=self.zero_position, label="0° position in motor steps : ")
+        self.calib_plot.addItem(pyqtgraph.InfiniteLine(peaks[0],angle=90,pen=pen))
+        self.calib_plot.addItem(pyqtgraph.InfiniteLine(peaks[1],angle=90,pen=pen))
         self.params.add_text_label("red_ratio", value=self.reduction_ratio, label="Reduction ratio")
+        self.params.add_text_label("frist_peak", value=peaks[0], label="first peak")
+        self.params.add_text_label("second_peak", value=peaks[1], label="second peak")
         self.params.add_text_label("instructions", "Please Copy the values above in the constants.py file \n 0° position should be in TURNTABLE_ANGLE_MIN_DEC \n Reduction ratio should be in REDUCTION_RATIO \n Then restart python (spyder if you're using it) to activate the change")
         
              

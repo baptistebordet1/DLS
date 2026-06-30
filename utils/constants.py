@@ -9,12 +9,12 @@ class Arduino_interface():
     REDUCTION_RATIO=100
     INITIALISATION_TIME=3 #time to be sure serial connection is initialised 
     TURNTABLE_ANGLE_MIN_DEG=0 # 0° angle 
-    TURNTABLE_ANGLE_MIN_DEC=0 # To calibrate angle corresponding to the O° angle 
+    TURNTABLE_ANGLE_MIN_DEC=316.082 # angle corresponding to the O° angle 
     TURNTABLE_ANGLE_MAX_DEG=180 # 180° angle 
-    TURNTABLE_ANGLE_MAX_DEC=180 # calculated angle from the 0 position thanks to reduction ratio
-    ATTENUATOR_MOTOR_POSITION={0:"144", 1:"168", 2:"0",3:"24",4:"48",5:"72",6:"96",7:"120"} # one full turn of the Attenuator is 192 steps.
-    CALIBRATION_STEPS= 10 # (must be an int) number of steps done before a new measurement is made for the turntable calibration
-    MAX_ROTATION_FULL_TURN=10 # max number of rotation of the rotation motor 
+    TURNTABLE_ANGLE_MAX_DEC=183.914 # calculated angle from the 0 position thanks to reduction ratio
+    ATTENUATOR_MOTOR_POSITION={0:"7200", 1:"8400", 2:"0",3:"1200",4:"2400",5:"3600",6:"4800",7:"6000"} # one full turn of the Attenuator is 192 steps.
+    CALIBRATION_STEPS= 1000 # (must be an int) number of steps done before a new measurement is made for the turntable calibration
+    MAX_ROTATION_FULL_TURN=4000 # max number of step of the rotation motor 
     PHOTODIODE_ATTENUATOR_THRESHOLD=45 # threshold for the photiode for autofind of attenuation 
     
 class Acquisition_time_limit():

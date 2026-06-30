@@ -18,8 +18,7 @@ public:
   void move_trig_negativ_rotation_platine(int _rotation_number_before_measure_position, int _dl);
   char flip(char _c);
   String graytoInt(String _gray);
-  void move_trig_positiv_attenuator(int _steps_number);
-  void move_trig_negativ_attenuator(int _steps_number);
+  int move_trig_positiv_attenuator(int _steps_to_do);
   float read_encoder();
   int initialisation_position_attenuator();
   float map_float(long x, long in_min, long in_max, float out_min, float out_max);
@@ -40,9 +39,10 @@ private:
   int _CSPin_A;    // Chip select pin for SPI connection (Attenuator driver)
   int _is_signal_phototransistor; // variable conatining the value of the phottransistor for attenuator position
   int _rotation_number_before_measure_position;
+  int _steps_goal; // variabale of the position to be reached by attenuator
+  int _steps_to_do; // variable conatining the number of steps to do by attenuator motor
   int _position_attenuator_motor; // stores value of the position motor take care when changing this value
   int _dl;                       // delay motor rotation
-  int _steps_number;             // steps to do attenuator
   int _clock_positiv;            // encoder clock +
   int _clock_negativ;            // encoder clock -
   int _data_positiv;             // encoder data +

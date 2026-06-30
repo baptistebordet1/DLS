@@ -26,8 +26,10 @@ HighPowerStepperDriver sd;
 
 void setup()
 {
+  /*
   SPI.begin();
   sd.setChipSelectPin(CSPin);
+  */
 
   // Drive the STEP and DIR pins low initially.
   pinMode(StepPin, OUTPUT);
@@ -56,6 +58,7 @@ void setup()
 
   // Enable the motor outputs.
   sd.enableDriver();
+  
 }
 
 void loop()

@@ -51,7 +51,7 @@ class Worker(QObject):
         self.PD_timer=QTimer(self)
         self.PD_timer.setInterval(1000)
         self.PD_timer.timeout.connect(self.ask_photodiode_value)
-        #self.fpga_serial_ascii=FPGA_interface.FPGA_serial_ASCII()
+        self.fpga_serial_ascii=FPGA_interface.FPGA_serial_ASCII()
         #self.fpga_serial_data=FPGA_interface.FPGA_serial_data() # to be passed in subprocess 
         #self.PD_timer.start()
         
@@ -80,9 +80,8 @@ class Worker(QObject):
                 position_motor=self.arduino_comm.converter_angle_rotation_turntable_dec_to_deg(float(str(self.received_message[18:-2].decode("utf-8"))))
                 self.dict_motors_positions["Rotation motor pos"]=position_motor
                 self.dict_status["current_action"]="None"
-                print("end")
-            elif b"finished_movement" in self.received_message:
-                self.position_calibration=self.received_message[31:-2]
+            elif b"calibration_finished_movement" in self.received_message:
+                self.position_calibration=self.received_message[30:-1]
                 self.calibration_step_done.emit(float(str(self.position_calibration.decode("utf-8"))))
             elif b"movement_attenuation_finished" in self.received_message:
                 if self.auto_find==1:
@@ -90,6 +89,7 @@ class Worker(QObject):
                 position_attenuator=int(self.received_message[30:])
                 self.dict_motors_positions["Attenuation motor pos"]=list(constants.Arduino_interface.ATTENUATOR_MOTOR_POSITION.keys())[list(constants.Arduino_interface.ATTENUATOR_MOTOR_POSITION.values()).index(str(position_attenuator))]
                 self.dict_status["current_action"]="None"
+
         
                 
     def send_update_gui_command(self):

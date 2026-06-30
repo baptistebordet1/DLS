@@ -62,7 +62,7 @@ class pico_block_aquisition():
         # Direction = ps3000A_Falling = 3
         # Delay = 0
         # autoTrigger_ms = 1000
-        self.status["trigger"] =ps.ps3000aSetSimpleTrigger(self.chandle, 1, 0, 1024, 3, 0, 1000)
+        self.status["trigger"] =ps.ps3000aSetSimpleTrigger(self.chandle, 0, 0, 1024, 3, 0, 1000)
         assert_pico_ok(self.status["trigger"])
         
         # Setting the number of sample to be collected
@@ -89,6 +89,8 @@ class pico_block_aquisition():
         self.overflow = ctypes.c_int16()
         # Creates converted types maxsamples
         self.cmaxSamples = ctypes.c_int32(self.maxsamples)
+        
+    def acquire(self):
         
         # Starts the block capture
         # Handle = chandle
@@ -137,12 +139,11 @@ class pico_block_aquisition():
         while self.ready.value == self.check.value:
             self.status["isReady"] = ps.ps3000aIsReady(self.chandle, ctypes.byref(self.ready))
             
-    def acquire(self):
+ 
         
         
         self.status["GetValues"] = ps.ps3000aGetValues(self.chandle, 0, ctypes.byref(self.cmaxSamples), 0, 0, 0, ctypes.byref(self.overflow))
         assert_pico_ok(self.status["GetValues"])
-        
         # Finds the max ADC count
         # Handle = chandle
         # Value = ctype.byref(maxADC)

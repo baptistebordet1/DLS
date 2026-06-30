@@ -32,7 +32,7 @@ class Arduino_communication():
         """
         for port, desc, hwid in sorted(list_ports.comports()): # list all available ports
         #TODO check if this works on other computers with Arduino Mega 2560
-            if "USB Serial" in desc:
+            if "USB Serial Device" in desc:
                 arduino_port=port  
         try: 
             self.arduino = serial.Serial(arduino_port, baud_rate,timeout=timeout, write_timeout=timeout)
@@ -151,8 +151,9 @@ class Arduino_communication():
 
         """
         angle_rotation_dec=self.converter_angle_rotation_turntable_deg_to_dec(angle_rotation)
+        print(angle_rotation_dec)
         try:
-            string_to_send="MT"+str(angle_rotation_dec) # angle_rotation_dec is float 
+            string_to_send="MT"+str(angle_rotation) # angle_rotation_dec is float 
             self.arduino.write(self.var_to_byte(string_to_send)) 
         except serial.SerialTimeoutException:
             raise serial.SerialTimeoutException("Arduino")

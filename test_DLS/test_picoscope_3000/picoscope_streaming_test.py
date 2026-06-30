@@ -207,6 +207,3 @@ assert_pico_ok(status["stop"])
 # handle = chandle
 status["close"] = ps.ps3000aCloseUnit(chandle)
 assert_pico_ok(status["close"])
-
-# Display status returns
-print(status)

@@ -14,7 +14,7 @@ import numpy as np
 class Motor_rotation(container.QFrameContainer):
     send_command_rotation=pyqtSignal(float)
     start_calib=pyqtSignal()
-    def setup(self):
+    def setup(self,i_thread):
         
         super().setup()
         self.params=self.add_child("motor rotation params",param_table.ParamTable(self),location=(0,0))
@@ -28,10 +28,11 @@ class Motor_rotation(container.QFrameContainer):
         self.params.add_num_edit("move_rotation",label="Move:")
         self.params.add_button("apply_rotation",caption="Apply")
         self.params.w["apply_rotation"].clicked.connect(self.send_command_move)
+        self.i_thread=i_thread
         
     def calibration_motor(self):
         self.calib_window=calibration_ctl.Calibration(self)
-        self.calib_window.setup()
+        self.calib_window.setup(self.i_thread)
         self.calib_window.show()
         self.start_calib.emit()
         

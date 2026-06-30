@@ -46,7 +46,8 @@ class Window(container.QWidgetContainer):
         self._config=constants.default_configuration(self)
         self.config_dict=self._config.config_dict
         
-
+        self.create_worker_obj()
+        
         # Plots tab
         
         with self.using_new_sublayout("plots", "vbox"):
@@ -98,7 +99,7 @@ class Window(container.QWidgetContainer):
             self.motor_rotation_tab=self.motor_tabs.add_tab("Motor rotation tab", "Rotation")
             self.motor_attenuation_tab=self.motor_tabs.add_tab("Motor attenuation tab", "Attenuation")
             self.motor_rotation_control=self.motor_rotation_tab.add_child("motor rotation", motor_ctl.Motor_rotation(self.motor_tabs))
-            self.motor_rotation_control.setup()
+            self.motor_rotation_control.setup(self.worker)
             self.motor_attenuation_control=self.motor_attenuation_tab.add_child("motor rotation", motor_ctl.Motor_attenuation(self.motor_tabs))
             self.motor_attenuation_control.setup()
             self.add_padding(kind="vertical")
@@ -140,6 +141,7 @@ class Window(container.QWidgetContainer):
             self.initialize_default_values()
             
             self.start_interface_thread()
+
             
     # load config_dict into the different part of the control 
     
@@ -158,17 +160,21 @@ class Window(container.QWidgetContainer):
         self.motor_rotation_control.update_position(self.dict_motors_positions)
         self.motor_attenuation_control.update_position(self.dict_motors_positions)
         
+    def create_worker_obj(self):
+        
+        self.thread = QThread()
+        # Step 3: Create a worker object
+        self.worker =interface_thread.Worker()
+        # Step 4: Move worker to the thread
+        self.worker.moveToThread(self.thread)
+        
     def start_interface_thread(self):
         # This is way to create a new thread which will have an event loop (other ways provided on documentation 
         # don't create a new thread for most of it or don't have an event loop because the run method is overwritten)
         
         # Step 1 Create a worker class whihc inherits from QObject (done in interface_thread.py)
         # Step 2 : Create a QThread object
-        self.thread = QThread()
-        # Step 3: Create a worker object
-        self.worker =interface_thread.Worker()
-        # Step 4: Move worker to the thread
-        self.worker.moveToThread(self.thread)
+       
         # Step 5: Connect signals and slots
         self.thread.started.connect(self.worker.setup)
         self.worker.thread_finished.connect(self.thread.quit)
@@ -258,6 +264,7 @@ class Window(container.QWidgetContainer):
                 
     def closeEvent(self, *args, **kwargs):
         super(container.QWidgetContainer, self).closeEvent(*args, **kwargs)
+        self.worker.arduino_comm.close()
         self.worker.thread_finished.emit() 
         
 

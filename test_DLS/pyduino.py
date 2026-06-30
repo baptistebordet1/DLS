@@ -42,7 +42,6 @@ class Arduino():
         command = (''.join(('RD', str(pin_number)))).encode()
         self.conn.write(command)
         line_received = self.conn.readline().decode().strip()
-        print(line_received)
         header, value = line_received.split(':') # e.g. D13:1
         if header == ('D'+ str(pin_number)):
             # If header matches

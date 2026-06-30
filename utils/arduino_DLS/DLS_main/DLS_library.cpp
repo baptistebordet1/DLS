@@ -39,10 +39,10 @@ void DLS_library::begin() {
   _sd.clearStatus();
   // Select auto mixed decay.  TI's DRV8711 documentation recommends this mode
   // for most applications, and we find that it usually works well.
-  _sd.setDecayMode(HPSDDecayMode::SlowIncMixedDec);
+  _sd.setDecayMode(HPSDDecayMode::SlowIncAutoMixedDec);
   // Set the current limit. You should change the number here to an appropriate
   // value for your particular system.
-  _sd.setCurrentMilliamps36v4(1000);
+  _sd.setCurrentMilliamps36v4(100);
   // Set the number of microsteps that correspond to one full step.
   _sd.setStepMode(HPSDStepMode::MicroStep32);
 
@@ -68,7 +68,7 @@ void DLS_library::step_R(int _StepPin_R) {
 }
 void DLS_library::step_A() {
   _sd.step();
-  delayMicroseconds(5000);
+  delayMicroseconds(1000);
 }
 
 // Rotation motor control
@@ -82,6 +82,7 @@ void DLS_library::move_trig_positiv_rotation_platine(int _rotation_number_before
     }
   }
 }
+
 void DLS_library::move_trig_negativ_rotation_platine(int _rotation_number_before_measure_position, int _dl) {  // rotation_number_before_measure_position is the number of rotation before the value is checked.
   DLS_library::setDirection_R(_DirPin_R, LOW);
   for (int i = 0; i < _rotation_number_before_measure_position ; i++) {
@@ -92,44 +93,32 @@ void DLS_library::move_trig_negativ_rotation_platine(int _rotation_number_before
     }
   }
 }
-
 // Attenuator motor control
-void DLS_library::move_trig_positiv_attenuator(int _steps_number) {
+int DLS_library::move_trig_positiv_attenuator(int _steps_goal) {
+  DLS_library::_steps_to_do = (_steps_goal - DLS_library::_position_attenuator_motor+9600) % 9600;
   DLS_library::_sd.enableDriver();
   DLS_library::setDirection_A(0);
-  for (unsigned int x = 0; x < abs(_steps_number); x++) {
+  for (unsigned int x = 0; x < abs(_steps_to_do); x++) {
     DLS_library::step_A();
     DLS_library::_position_attenuator_motor++;
 
-    if (DLS_library::_position_attenuator_motor == 192) {
+    if (DLS_library::_position_attenuator_motor == 9600) {
       DLS_library::_position_attenuator_motor = 0;
       DLS_library::_is_signal_phototransistor = digitalRead(_phototransistor_pin);
       if (DLS_library::_is_signal_phototransistor == 1) {
         Serial.write("error_motor_attenuator_position");
-        DLS_library::_is_signal_phototransistor, DLS_library::_position_attenuator_motor = DLS_library::initialisation_position_attenuator();
-      }
-    }
-    if (DLS_library::fault_stop_A == 1) {
-      Serial.write("error_motor_attenuator");
-      break;
-    }
-  }
-  delay(10);
-  DLS_library::_sd.disableDriver();
-}
-void DLS_library::move_trig_negativ_attenuator(int _steps_number) {
-  DLS_library::_sd.enableDriver();
-  DLS_library::setDirection_A(1);
 
-  for (unsigned int x = 0; x < _steps_number; x++) {
-    DLS_library::step_A();
-    DLS_library::_position_attenuator_motor--;
-    if (DLS_library::_position_attenuator_motor == 0) {
-      DLS_library::_position_attenuator_motor = 192;
-      DLS_library::_is_signal_phototransistor = digitalRead(_phototransistor_pin);
-      if (DLS_library::_is_signal_phototransistor == 1) {
-        Serial.write("error_motor_attenuator_position");
-        DLS_library::_position_attenuator_motor = DLS_library::initialisation_position_attenuator();
+        DLS_library::_is_signal_phototransistor, DLS_library::_position_attenuator_motor = DLS_library::initialisation_position_attenuator();
+
+        DLS_library::_sd.enableDriver();
+        DLS_library::setDirection_A(0);
+        DLS_library::_steps_to_do = _steps_goal - DLS_library::_position_attenuator_motor;
+        Serial.println(DLS_library::_steps_to_do);
+        for (unsigned int x = 0; x < abs(_steps_to_do); x++) {
+          DLS_library::step_A();
+          DLS_library::_position_attenuator_motor++;
+        }
+
       }
     }
     if (DLS_library::fault_stop_A == 1) {
@@ -139,19 +128,20 @@ void DLS_library::move_trig_negativ_attenuator(int _steps_number) {
   }
   delay(10);
   DLS_library::_sd.disableDriver();
+  return DLS_library::_position_attenuator_motor;
 }
+
 int DLS_library::initialisation_position_attenuator() {
   DLS_library::_sd.enableDriver();
   DLS_library::setDirection_A(0);
-  for (unsigned int x = 0; x < 193; x++)  // change here how steps is one turn
+  for (unsigned int x = 0; x < 9600; x++)  // change here how steps is one turn
   {
     DLS_library::step_A();
+    DLS_library::_position_attenuator_motor++;
+    delayMicroseconds(10);
     DLS_library::_is_signal_phototransistor = digitalRead(_phototransistor_pin);
-    if (DLS_library::_is_signal_phototransistor == 0) {
-      for (unsigned int x = 0; x < 10; x++)  // Here 9 more steps are done to be in the middle of the phototransitor detection (there are 18 Steps which are on the phototransistor window)
-      {
-        DLS_library::step_A();
-      }
+  
+    if (DLS_library::_is_signal_phototransistor == 0){
       DLS_library::_position_attenuator_motor = 0;
       break;
     }
